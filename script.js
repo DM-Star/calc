@@ -1491,30 +1491,7 @@ function joinGomokuRoom() {
     });
 }
 
-// 重新连接Peer
-function reconnectPeer() {
-    if (gomokuPeer) {
-        gomokuPeer.destroy();
-        gomokuPeer = null;
-    }
-    
-    if (gomokuConn) {
-        gomokuConn.close();
-        gomokuConn = null;
-    }
-    
-    updateRoomStatus('正在重新连接...');
-    setupPeerConnection();
-    
-    // 如果之前有房间号，尝试重新加入
-    if (gomokuRoomId) {
-        setTimeout(function() {
-            if (gomokuPeer && gomokuPeer.id) {
-                joinRoomAfterConnect();
-            }
-        }, 2000);
-    }
-}
+
 
 // 开始游戏
 function startGame(isBlack) {
@@ -1667,14 +1644,28 @@ function handleBoardClick(event) {
     if (!canvas) return;
     
     const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    
+    // 修复移动端点击位置计算：支持触摸事件
+    let clientX, clientY;
+    if (event.touches && event.touches.length > 0) {
+        // 触摸事件
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+    } else {
+        // 鼠标事件
+        clientX = event.clientX;
+        clientY = event.clientY;
+    }
+    
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
     
     const cellSize = 30;
     const padding = 15;
     
-    const col = Math.round((x - padding) / cellSize);
-    const row = Math.round((y - padding) / cellSize);
+    // 改进位置计算：使用更精确的坐标转换
+    const col = Math.floor((x - padding + cellSize / 2) / cellSize);
+    const row = Math.floor((y - padding + cellSize / 2) / cellSize);
     
     if (row >= 0 && row < 15 && col >= 0 && col < 15) {
         makeMove(row, col);
@@ -2518,103 +2509,6 @@ window.addEventListener('load', function() {
         }
     `;
     document.head.appendChild(style);
-});
-
-// 添加连接测试功能
-function testGomokuConnection() {
-    if (!gomokuPeer) {
-        alert('Peer连接未初始化，请稍等...');
-        return;
-    }
-    
-    if (gomokuPeer.disconnected) {
-        alert('Peer连接已断开');
-        return;
-    }
-    
-    if (gomokuPeer.id) {
-        const status = `Peer连接正常！\n连接ID: ${gomokuPeer.id}\n状态: 已连接`;
-        alert(status);
-    } else {
-        alert('Peer连接正在建立中...');
-    }
-}
-
-// 添加调试信息显示
-function showDebugInfo() {
-    const info = [
-        '=== 五子棋对战调试信息 ===',
-        `Peer连接: ${gomokuPeer ? (gomokuPeer.id ? '已连接' : '连接中') : '未初始化'}`,
-        `Peer ID: ${gomokuPeer ? (gomokuPeer.id ? gomokuPeer.id.substring(0, 6) + '...' : '无') : '无'}`,
-        `房间连接: ${gomokuConn ? (gomokuConn.open ? '已连接' : '未连接') : '无'}`,
-        `房间号: ${gomokuRoomId || '未设置'}`,
-        `玩家姓名: ${playerName || '未设置'}`,
-        `是否主机: ${isHost ? '是' : '否'}`,
-        `游戏状态: ${gameStarted ? '进行中' : '未开始'}`,
-        `当前玩家: ${currentPlayer || '未设置'}`,
-        '========================'
-    ].join('\n');
-    
-    alert(info);
-}
-
-// 页面加载完成后添加调试按钮
-window.addEventListener('load', function() {
-    // 添加调试面板到页面
-    const debugPanel = document.createElement('div');
-    debugPanel.style.position = 'fixed';
-    debugPanel.style.top = '10px';
-    debugPanel.style.right = '10px';
-    debugPanel.style.zIndex = '1000';
-    debugPanel.style.padding = '10px';
-    debugPanel.style.background = 'rgba(0,0,0,0.8)';
-    debugPanel.style.color = 'white';
-    debugPanel.style.borderRadius = '5px';
-    debugPanel.style.fontSize = '12px';
-    debugPanel.style.fontFamily = 'monospace';
-    debugPanel.innerHTML = `
-        <div style="margin-bottom: 5px;"><strong>五子棋对战调试面板</strong></div>
-        <div style="margin-bottom: 5px;">连接状态: <span id="debug-status">未连接</span></div>
-        <div style="margin-bottom: 5px;">房间状态: <span id="debug-room">未设置</span></div>
-        <button onclick="testGomokuConnection()" style="margin: 2px 0; padding: 2px 5px; font-size: 10px;">测试连接</button>
-        <button onclick="showDebugInfo()" style="margin: 2px 0; padding: 2px 5px; font-size: 10px;">调试信息</button>
-        <button onclick="reconnectPeer()" style="margin: 2px 0; padding: 2px 5px; font-size: 10px;">重新连接</button>
-    `;
-    document.body.appendChild(debugPanel);
-    
-    // 定期更新调试信息
-    setInterval(function() {
-        const statusElement = document.getElementById('debug-status');
-        const roomElement = document.getElementById('debug-room');
-        
-        if (statusElement) {
-            if (gomokuPeer) {
-                if (gomokuPeer.disconnected) {
-                    statusElement.textContent = '已断开';
-                    statusElement.style.color = 'red';
-                } else if (gomokuPeer.id) {
-                    statusElement.textContent = '已连接';
-                    statusElement.style.color = 'green';
-                } else {
-                    statusElement.textContent = '连接中...';
-                    statusElement.style.color = 'orange';
-                }
-            } else {
-                statusElement.textContent = '未初始化';
-                statusElement.style.color = 'gray';
-            }
-        }
-        
-        if (roomElement) {
-            if (gomokuRoomId) {
-                roomElement.textContent = gomokuRoomId;
-                roomElement.style.color = 'cyan';
-            } else {
-                roomElement.textContent = '未设置';
-                roomElement.style.color = 'gray';
-            }
-        }
-    }, 1000);
 });
 
 // 测试棋色分配逻辑
