@@ -221,3 +221,590 @@ button.exit:hover {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* 五子棋对战样式 */
+.practice-btn.gomoku {
+    background-color: #e83e8c;
+    color: white;
+}
+.practice-btn.gomoku:hover {
+    background-color: #d91a72;
+}
+
+/* 五子棋设置界面样式 */
+.player-setup {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.room-actions {
+    margin: 20px 0;
+}
+
+.action-group {
+    margin-bottom: 15px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+.action-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    background-color: #0056b3;
+}
+
+.action-btn.primary {
+    background-color: #28a745;
+}
+
+.action-btn.primary:hover {
+    background-color: #218838;
+}
+
+.action-btn.secondary {
+    background-color: #6c757d;
+}
+
+.action-btn.secondary:hover {
+    background-color: #545b62;
+}
+
+.action-btn.surrender {
+    background-color: #dc3545;
+}
+
+.action-btn.surrender:hover {
+    background-color: #c82333;
+}
+
+.action-btn.draw {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.action-btn.draw:hover {
+    background-color: #e0a800;
+}
+
+.action-description {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.room-status {
+    margin: 20px 0;
+    padding: 15px;
+    background: #e9ecef;
+    border-radius: 5px;
+}
+
+/* 五子棋游戏界面样式 */
+.player-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.player-self, .player-opponent {
+    flex: 1;
+    text-align: center;
+}
+
+.game-status {
+    flex: 2;
+    text-align: center;
+    font-weight: bold;
+}
+
+.board-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+#gomoku-board {
+    border: 2px solid #333;
+    background: #f0d9b5;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.game-controls {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.game-controls .action-btn {
+    margin: 0 10px;
+}
+
+/* 聊天区域样式 */
+.chat-container {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.chat-container h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+#chat-messages {
+    height: 100px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 4px;
+}
+
+.chat-input-container {
+    display: flex;
+    gap: 10px;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* 棋子动画效果 */
+@keyframes piece-drop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.piece-animation {
+    animation: piece-drop 0.3s ease-out;
+}
+
+/* 游戏状态指示器 */
+.turn-indicator {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.turn-black {
+    background-color: #000;
+    color: white;
+}
+
+.turn-white {
+    background-color: #fff;
+    color: #000;
+    border: 2px solid #000;
+}
+
+/* 胜利提示 */
+.victory-message {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 10px 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+.defeat-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 10px 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .player-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .player-self, .player-opponent, .game-status {
+        flex: none;
+        width: 100%;
+    }
+    
+    #gomoku-board {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .chat-input-container {
+        flex-direction: column;
+    }
+}
+
+/* 连接状态指示器 */
+.connection-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    z-index: 1000;
+}
+
+.connection-connected {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.connection-disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.connection-connecting {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* 房间信息面板样式 */
+.room-info-panel {
+    margin: 20px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.room-info-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    z-index: 1;
+}
+
+.room-info-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.room-code-label {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 2;
+}
+
+.room-code {
+    font-size: 32px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin: 10px 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 2;
+    font-family: 'Courier New', monospace;
+}
+
+.room-info-panel button {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(10px);
+}
+
+.room-info-panel button:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
+    transform: scale(1.05);
+}
+
+.room-info-panel button:active {
+    transform: scale(0.95);
+}
+
+#copy-feedback {
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+/* 房间号脉冲动画 */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+}
+
+@keyframes glow {
+    0% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+    100% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+}
+
+.room-info-panel.pulse {
+    animation: glow 1s ease-in-out;
+}
+
+/* 复制成功动画 */
+@keyframes copySuccess {
+    0% {
+        background: rgba(255,255,255,0.2);
+    }
+    50% {
+        background: rgba(144, 238, 144, 0.4);
+    }
+    100% {
+        background: rgba(255,255,255,0.2);
+    }
+}
+
+.copy-success {
+    animation: copySuccess 0.5s ease-in-out;
+}
+
+/* 房间状态指示器 */
+.connection-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 2;
+}
+
+.connection-connected {
+    background: rgba(144, 238, 144, 0.3);
+    color: #155724;
+    border: 1px solid rgba(144, 238, 144, 0.5);
+}
+
+.connection-disconnected {
+    background: rgba(255, 182, 193, 0.3);
+    color: #721c24;
+    border: 1px solid rgba(255, 182, 193, 0.5);
+}
+
+.connection-connecting {
+    background: rgba(255, 243, 205, 0.3);
+    color: #856404;
+    border: 1px solid rgba(255, 243, 205, 0.5);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .room-info-panel {
+        margin: 15px 0;
+        padding: 15px;
+    }
+    
+    .room-code {
+        font-size: 24px;
+        letter-spacing: 2px;
+    }
+    
+    .room-info-panel button {
+        padding: 6px 15px;
+        font-size: 12px;
+    }
+    
+    #copy-feedback {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .room-info-panel {
+        margin: 10px 0;
+        padding: 12px;
+    }
+    
+    .room-code {
+        font-size: 20px;
+        letter-spacing: 1px;
+    }
+    
+    .room-code-label {
+        font-size: 12px;
+    }
+}
+
+/* 房间号闪烁效果 */
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.5;
+    }
+}
+
+.room-code.blink {
+    animation: blink 1s infinite;
+}
+
+/* 房间号输入框样式 */
+.room-code-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.room-code-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    text-align: center;
+    letter-spacing: 2px;
+    font-family: 'Courier New', monospace;
+}
+
+.room-code-input button {
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.room-code-input button:hover {
+    background: #0056b3;
+}
+
+/* 房间状态指示器 */
+.room-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.status-online {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-offline {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-online::before {
+    content: '●';
+    color: #28a745;
+    font-size: 8px;
+}
+
+.status-offline::before {
+    content: '●';
+    color: #dc3545;
+    font-size: 8px;
+}
+
+.status-pending::before {
+    content: '●';
+    color: #ffc107;
+    font-size: 8px;
+}
+
+/* 加载动画 */
+.loading-dots {
+    display: inline-block;
+    animation: loading-dots 1.5s infinite;
+}
+
+@keyframes loading-dots {
+    0%, 20% {
+        content: '.';
+    }
+    40% {
+        content: '..';
+    }
+    60%, 100% {
+        content: '...';
+    }
+}
