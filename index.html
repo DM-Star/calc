@@ -214,7 +214,7 @@
             <h1>数学练习工具</h1>
             
             <div class="practice-selector">
-                <button class="practice-btn decimal" onclick="selectPractice('decimal')">十进制转二进制练习</button>
+                <button class="practice-btn decimal" onclick="selectPractice('decimal')">十进制转二进制</button>
                 <button class="practice-btn" onclick="selectPractice('arithmetic')">整数四则运算练习</button>
                 <button class="practice-btn comprehensive" onclick="selectPractice('comprehensive')">综合四则运算练习</button>
             </div>
@@ -222,7 +222,7 @@
 
         <!-- 十进制转二进制设置界面 -->
         <div id="decimal-setup" class="screen">
-            <h1>十进制转二进制练习</h1>
+            <h1>十进制转二进制</h1>
             
             <!-- 随机数种设置 -->
             <div class="seed-selector" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">
@@ -847,7 +847,7 @@ function generateDecimalNumbers(min, max, count) {
             return decimal.toString(2);
         }
 
-        // 开始十进制转二进制练习
+        // 开始十进制转二进制
         function startDecimalPractice() {
             const min = parseInt(document.getElementById('min-range').value);
             const max = parseInt(document.getElementById('max-range').value);
@@ -892,7 +892,7 @@ function generateDecimalNumbers(min, max, count) {
             results = [];
             startTime = Date.now();
             
-            document.getElementById('practice-title').textContent = '十进制转二进制练习';
+            document.getElementById('practice-title').textContent = '十进制转二进制';
             showScreen('practice-screen');
             showQuestion();
         }
@@ -1107,7 +1107,7 @@ function generateDecimalNumbers(min, max, count) {
             let questionText = '';
             if (currentPracticeType === 'decimal') {
                 const decimalNumber = questions[currentQuestionIndex];
-                questionText = `请将十进制数 <span id="decimal-number">${decimalNumber}</span> 转换为二进制数：`;
+                questionText = `将十进制数 <span id="decimal-number">${decimalNumber}</span> 转为二进制：`;
             } else if (currentPracticeType === 'arithmetic' || currentPracticeType === 'comprehensive') {
                 questionText = questions[currentQuestionIndex].question;
             }
@@ -1234,13 +1234,24 @@ function generateDecimalNumbers(min, max, count) {
         // 重新开始练习
         function restartPractice() {
             actualSeedUsed = null;
+            
+            // 清空随机数种输入框
             if (currentPracticeType === 'decimal') {
+                document.getElementById('decimal-random-seed').value = '';
+                document.getElementById('decimal-seed-value').textContent = '随机生成';
                 showScreen('decimal-setup');
             } else if (currentPracticeType === 'arithmetic') {
+                document.getElementById('arithmetic-random-seed').value = '';
+                document.getElementById('arithmetic-seed-value').textContent = '随机生成';
                 showScreen('arithmetic-setup');
             } else if (currentPracticeType === 'comprehensive') {
+                document.getElementById('comprehensive-random-seed').value = '';
+                document.getElementById('comprehensive-seed-value').textContent = '随机生成';
                 showScreen('comprehensive-setup');
             }
+            
+            // 重置当前种子
+            currentSeed = null;
         }
 
         // 切换界面显示
