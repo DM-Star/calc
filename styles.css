@@ -35,9 +35,20 @@ h1 {
     margin: 10px;
     font-size: 16px;
     width: 200px;
+    /* 移动端触摸优化 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 .practice-btn:hover {
     background-color: #218838;
+}
+/* 移动端触摸反馈 */
+.practice-btn:active {
+    transform: scale(0.98);
 }
 .practice-btn.decimal {
     background-color: #007bff;
@@ -251,21 +262,34 @@ button.exit:hover {
     border-radius: 5px;
 }
 
-.action-btn {
+/* 按钮样式 */
+button {
     background-color: #007bff;
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
-    margin-right: 10px;
+    margin: 5px;
     font-size: 14px;
+    /* 移动端触摸优化 */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    min-height: 44px; /* 移动端最小触摸区域 */
 }
 
-.action-btn:hover {
+button:hover {
     background-color: #0056b3;
 }
 
+/* 移动端触摸反馈 */
+button:active {
+    transform: scale(0.98);
+}
 .action-btn.primary {
     background-color: #28a745;
 }
@@ -696,6 +720,21 @@ button.exit:hover {
     
     .room-code-label {
         font-size: 12px;
+    }
+    
+    /* 小屏幕设备按钮优化 */
+    .practice-btn {
+        width: 95%;
+        margin: 10px 0;
+        padding: 20px 15px;
+        font-size: 18px;
+        min-height: 60px;
+    }
+    
+    button {
+        min-height: 50px;
+        font-size: 16px;
+        padding: 15px 20px;
     }
 }
 

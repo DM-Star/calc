@@ -1640,6 +1640,11 @@ function setupBoardClick() {
     
     // 添加新的事件监听器
     canvas.addEventListener('click', handleBoardClick);
+    // 移动端触摸事件支持
+    canvas.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        handleBoardClick(e.touches[0]);
+    });
 }
 
 // 独立的棋盘点击处理函数
