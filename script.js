@@ -925,6 +925,21 @@ window.addEventListener('load', function() {
     updateAllSeedDisplays(currentSeed);
 });
 
+// 显示更新日志界面
+function showUpdateLog() {
+    showScreen('update-log-screen');
+    loadUpdateLog();
+}
+
+// 显示更新日志界面
+function loadUpdateLog() {
+    // 现在使用iframe加载单独的update-log.html文件
+    // 不需要额外的处理，iframe会自动加载内容
+    console.log('更新日志界面已显示');
+}
+
+
+
 // 页面加载完成后初始化事件监听器
 document.addEventListener('DOMContentLoaded', function() {
     // 支持回车键提交答案
