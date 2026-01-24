@@ -21,6 +21,16 @@ let gameOver = false; // 游戏是否结束的标志
 let drawRequested = false; // 是否已发送和棋请求
 let drawRequestPending = false; // 是否有待处理的和棋请求
 
+// 添加popstate事件监听器，支持手机返回键
+window.addEventListener('popstate', function(event) {
+    if (event.state && event.state.screen) {
+        showScreen(event.state.screen);
+    } else {
+        // 如果没有状态信息，默认返回主菜单
+        showScreen('main-menu');
+    }
+});
+
 // 设置随机数种
 function setRandomSeed(seed) {
     if (seed && seed >= 1 && seed <= 999999) {
@@ -891,6 +901,13 @@ function showScreen(screenId) {
     
     // 更新当前随机数种显示
     updateSeedDisplay();
+    
+    // 添加历史记录，支持手机返回键
+    if (screenId !== 'main-menu') {
+        window.history.pushState({ screen: screenId }, '', `#${screenId}`);
+    } else {
+        window.history.pushState({ screen: screenId }, '', window.location.pathname);
+    }
 }
 
 // 更新所有界面的随机数种显示
@@ -1227,14 +1244,59 @@ window.addEventListener('load', function() {
 // 显示更新日志界面
 function showUpdateLog() {
     showScreen('update-log-screen');
-    loadUpdateLog();
+    loadUpdateLogContent();
 }
 
-// 显示更新日志界面
-function loadUpdateLog() {
-    // 现在使用iframe加载单独的update-log.html文件
-    // 不需要额外的处理，iframe会自动加载内容
-    console.log('更新日志界面已显示');
+// 动态加载更新日志内容
+function loadUpdateLogContent() {
+    const contentDiv = document.getElementById('update-log-content');
+    if (!contentDiv) return;
+    
+    // 纯文本格式的更新日志内容
+    contentDiv.innerHTML = `
+        <h3>版本 1.3.3 - 2026年1月25日</h3>
+        <ul>
+            <li>暂时隐藏五子棋对战按钮（因存在bug）</li>
+        </ul>
+        
+        <h3>版本 1.3.2 - 2026年1月25日</h3>
+        <ul>
+            <li>修复手机端点击棋盘位置不准确的问题</li>
+            <li>删除五子棋对战调试面板，优化移动端体验</li>
+        </ul>
+        
+        <h3>版本 1.3.1 - 2026年1月25日</h3>
+        <ul>
+            <li>尝试修复手机端进不去五子棋的bug</li>
+        </ul>
+        
+        <h3>版本 1.3.0 - 2026年1月25日</h3>
+        <ul>
+            <li>新增五子棋对战功能，支持在线对战</li>
+        </ul>
+        
+        <h3>版本 1.2.0 - 2026年1月25日</h3>
+        <ul>
+            <li>新增更新日志功能，用户可查看最新更新内容</li>
+            <li>在主菜单添加Info按钮，方便访问更新信息</li>
+            <li>优化界面布局和用户体验</li>
+        </ul>
+        
+        <h3>版本 1.1.0 - 2026年1月24日</h3>
+        <ul>
+            <li>新增随机数种功能，支持题目重现</li>
+            <li>优化练习界面布局和进度显示</li>
+        </ul>
+        
+        <h3>版本 1.0.0 - 2026年1月23日</h3>
+        <ul>
+            <li>初始版本发布</li>
+            <li>支持十进制转二进制练习</li>
+            <li>支持整数四则运算练习</li>
+            <li>支持综合四则运算练习</li>
+            <li>包含进度跟踪和结果统计功能</li>
+        </ul>
+    `;
 }
 
 // ==================== 五子棋对战功能 ====================
@@ -2486,6 +2548,15 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSeedFromURL();
     // 初始化所有界面的随机数种显示
     updateAllSeedDisplays(currentSeed);
+    
+    // 页面加载时处理URL hash，支持直接访问特定界面
+    const hash = window.location.hash.substring(1);
+    if (hash && document.getElementById(hash)) {
+        showScreen(hash);
+    } else {
+        // 默认显示主菜单
+        showScreen('main-menu');
+    }
 });
 
 // 页面加载完成后添加CSS动画
