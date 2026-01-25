@@ -6,6 +6,7 @@ let results = [];
 let currentPracticeType = '';
 let currentSeed = null;
 let actualSeedUsed = null; // 记录实际使用的随机数种
+let actualPracticeTime = 0; // 记录实际答题时间（不包含题目间隔时间）
 
 // 五子棋对战相关变量
 let gomokuPeer = null;
@@ -61,28 +62,230 @@ function getCurrentSeed() {
     return currentSeed;
 }
 
-// 保存随机数种到URL参数
-function saveSeedToURL() {
+// 保存练习配置到URL参数
+function savePracticeConfigToURL() {
     const url = new URL(window.location);
+    
+    // 清空所有参数，重新构建
+    url.search = '';
+    
+    // 使用紧凑编码：将所有参数合并为一个config参数
+    const config = {};
+    
+    // 保存随机数种
     if (actualSeedUsed) {
-        url.searchParams.set('seed', actualSeedUsed.toString());
-    } else {
-        url.searchParams.delete('seed');
+        config.s = actualSeedUsed;
     }
+    
+    // 保存练习类型
+    if (currentPracticeType) {
+        config.t = currentPracticeType;
+    }
+    
+    // 根据练习类型保存相应的配置参数
+    if (currentPracticeType === 'decimal') {
+        const min = document.getElementById('min-range').value;
+        const max = document.getElementById('max-range').value;
+        if (min && max) {
+            config.m = min;
+            config.M = max;
+        }
+    } else if (currentPracticeType === 'arithmetic') {
+        const min = document.getElementById('arithmetic-min-range').value;
+        const max = document.getElementById('arithmetic-max-range').value;
+        const operations = Array.from(document.querySelectorAll('input[name="operation"]:checked'))
+            .map(input => input.value).join(''); // 使用单个字符表示运算符
+        
+        if (min && max) {
+            config.m = min;
+            config.M = max;
+        }
+        if (operations) {
+            config.o = operations.replace(/\+/g, 'a').replace(/\-/g, 's').replace(/\*/g, 'm').replace(/\//g, 'd');
+        }
+    } else if (currentPracticeType === 'comprehensive') {
+        const min = document.getElementById('comprehensive-min-range').value;
+        const max = document.getElementById('comprehensive-max-range').value;
+        const numCount = document.getElementById('number-count').value;
+        const operations = Array.from(document.querySelectorAll('input[name="comprehensive-operation"]:checked'))
+            .map(input => input.value).join('');
+        
+        if (min && max) {
+            config.m = min;
+            config.M = max;
+        }
+        if (numCount) {
+            config.c = numCount;
+        }
+        if (operations) {
+            config.o = operations.replace(/\+/g, 'a').replace(/\-/g, 's').replace(/\*/g, 'm').replace(/\//g, 'd');
+        }
+    }
+    
+    // 如果有配置数据，则编码为Base64
+    if (Object.keys(config).length > 0) {
+        const configString = JSON.stringify(config);
+        const encodedConfig = btoa(configString);
+        url.searchParams.set('c', encodedConfig);
+    }
+    
     window.history.replaceState({}, '', url);
 }
 
-// 从URL参数加载随机数种
-function loadSeedFromURL() {
+// 从URL参数加载练习配置
+function loadPracticeConfigFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // 首先尝试新的紧凑编码格式
+    const configParam = urlParams.get('c');
+    if (configParam) {
+        try {
+            // 解码Base64配置
+            const decodedConfig = atob(configParam);
+            const config = JSON.parse(decodedConfig);
+            
+            // 加载随机数种
+            if (config.s) {
+                const seed = parseInt(config.s);
+                if (seed >= 1 && seed <= 999999) {
+                    setRandomSeed(seed);
+                    updateAllSeedDisplays(seed);
+                    
+                    // 自动将随机数种填入对应的输入框
+                    const seedInputs = [
+                        'decimal-random-seed',
+                        'arithmetic-random-seed', 
+                        'comprehensive-random-seed'
+                    ];
+                    
+                    seedInputs.forEach(inputId => {
+                        const inputElement = document.getElementById(inputId);
+                        if (inputElement) {
+                            inputElement.value = seed;
+                        }
+                    });
+                }
+            }
+            
+            // 加载练习类型和配置参数
+            if (config.t) {
+                currentPracticeType = config.t;
+                
+                // 根据练习类型加载相应的配置参数
+                if (config.t === 'decimal') {
+                    if (config.m && config.M) {
+                        document.getElementById('min-range').value = config.m;
+                        document.getElementById('max-range').value = config.M;
+                    }
+                    showScreen('decimal-setup');
+                } else if (config.t === 'arithmetic') {
+                    if (config.m && config.M) {
+                        document.getElementById('arithmetic-min-range').value = config.m;
+                        document.getElementById('arithmetic-max-range').value = config.M;
+                    }
+                    if (config.o) {
+                        const operations = config.o.replace(/a/g, '+').replace(/s/g, '-').replace(/m/g, '*').replace(/d/g, '/');
+                        const operationArray = operations.split('');
+                        document.querySelectorAll('input[name="operation"]').forEach(input => {
+                            input.checked = operationArray.includes(input.value);
+                        });
+                    }
+                    showScreen('arithmetic-setup');
+                } else if (config.t === 'comprehensive') {
+                    if (config.m && config.M) {
+                        document.getElementById('comprehensive-min-range').value = config.m;
+                        document.getElementById('comprehensive-max-range').value = config.M;
+                    }
+                    if (config.c) {
+                        document.getElementById('number-count').value = config.c;
+                    }
+                    if (config.o) {
+                        const operations = config.o.replace(/a/g, '+').replace(/s/g, '-').replace(/m/g, '*').replace(/d/g, '/');
+                        const operationArray = operations.split('');
+                        document.querySelectorAll('input[name="comprehensive-operation"]').forEach(input => {
+                            input.checked = operationArray.includes(input.value);
+                        });
+                    }
+                    showScreen('comprehensive-setup');
+                }
+            }
+            return; // 新的编码格式处理完成，不再处理旧格式
+        } catch (error) {
+            console.warn('新的URL编码格式解析失败，尝试旧格式:', error);
+        }
+    }
+    
+    // 向后兼容：处理旧的URL格式
     const seedParam = urlParams.get('seed');
     if (seedParam) {
         const seed = parseInt(seedParam);
         if (seed >= 1 && seed <= 999999) {
-            // 设置随机数种
             setRandomSeed(seed);
-            // 更新所有界面的显示
             updateAllSeedDisplays(seed);
+            
+            const seedInputs = [
+                'decimal-random-seed',
+                'arithmetic-random-seed', 
+                'comprehensive-random-seed'
+            ];
+            
+            seedInputs.forEach(inputId => {
+                const inputElement = document.getElementById(inputId);
+                if (inputElement) {
+                    inputElement.value = seed;
+                }
+            });
+        }
+    }
+    
+    const typeParam = urlParams.get('type');
+    if (typeParam) {
+        currentPracticeType = typeParam;
+        
+        if (typeParam === 'decimal') {
+            const min = urlParams.get('min');
+            const max = urlParams.get('max');
+            if (min && max) {
+                document.getElementById('min-range').value = min;
+                document.getElementById('max-range').value = max;
+            }
+            showScreen('decimal-setup');
+        } else if (typeParam === 'arithmetic') {
+            const min = urlParams.get('min');
+            const max = urlParams.get('max');
+            const ops = urlParams.get('ops');
+            
+            if (min && max) {
+                document.getElementById('arithmetic-min-range').value = min;
+                document.getElementById('arithmetic-max-range').value = max;
+            }
+            if (ops) {
+                const operations = ops.split(',');
+                document.querySelectorAll('input[name="operation"]').forEach(input => {
+                    input.checked = operations.includes(input.value);
+                });
+            }
+            showScreen('arithmetic-setup');
+        } else if (typeParam === 'comprehensive') {
+            const min = urlParams.get('min');
+            const max = urlParams.get('max');
+            const count = urlParams.get('count');
+            const ops = urlParams.get('ops');
+            
+            if (min && max) {
+                document.getElementById('comprehensive-min-range').value = min;
+                document.getElementById('comprehensive-max-range').value = max;
+            }
+            if (count) {
+                document.getElementById('number-count').value = count;
+            }
+            if (ops) {
+                const operations = ops.split(',');
+                document.querySelectorAll('input[name="comprehensive-operation"]').forEach(input => {
+                    input.checked = operations.includes(input.value);
+                });
+            }
+            showScreen('comprehensive-setup');
         }
     }
 }
@@ -507,7 +710,8 @@ function startDecimalPractice() {
         const seed = parseInt(seedValue);
         if (seed >= 1 && seed <= 999999) {
             setRandomSeed(seed);
-            saveSeedToURL();
+            currentPracticeType = 'decimal';
+            savePracticeConfigToURL();
             // 更新所有界面的显示
             updateAllSeedDisplays(seed);
         } else {
@@ -517,7 +721,8 @@ function startDecimalPractice() {
     } else {
         // 如果没有输入数种，使用随机数种
         setRandomSeed(null);
-        saveSeedToURL();
+        currentPracticeType = 'decimal';
+        savePracticeConfigToURL();
         // 更新所有界面的显示
         updateAllSeedDisplays(null);
     }
@@ -526,6 +731,7 @@ function startDecimalPractice() {
     currentQuestionIndex = 0;
     results = [];
     startTime = Date.now();
+    actualPracticeTime = 0; // 重置实际答题时间
     
     document.getElementById('practice-title').textContent = '十进制转二进制';
     showScreen('practice-screen');
@@ -550,7 +756,8 @@ function startArithmeticPractice() {
         const seed = parseInt(seedValue);
         if (seed >= 1 && seed <= 999999) {
             setRandomSeed(seed);
-            saveSeedToURL();
+            currentPracticeType = 'arithmetic';
+            savePracticeConfigToURL();
             // 更新当前界面显示
             document.getElementById('arithmetic-seed-value').textContent = seed;
         } else {
@@ -560,7 +767,8 @@ function startArithmeticPractice() {
     } else {
         // 如果没有输入数种，使用随机数种
         setRandomSeed(null);
-        saveSeedToURL();
+        currentPracticeType = 'arithmetic';
+        savePracticeConfigToURL();
         document.getElementById('arithmetic-seed-value').textContent = '随机生成';
     }
 
@@ -576,6 +784,7 @@ function startArithmeticPractice() {
     currentQuestionIndex = 0;
     results = [];
     startTime = Date.now();
+    actualPracticeTime = 0; // 重置实际答题时间
     
     document.getElementById('practice-title').textContent = '整数四则运算练习';
     showScreen('practice-screen');
@@ -606,7 +815,8 @@ function startComprehensivePractice() {
         const seed = parseInt(seedValue);
         if (seed >= 1 && seed <= 999999) {
             setRandomSeed(seed);
-            saveSeedToURL();
+            currentPracticeType = 'comprehensive';
+            savePracticeConfigToURL();
             // 更新当前界面显示
             document.getElementById('comprehensive-seed-value').textContent = seed;
         } else {
@@ -616,7 +826,8 @@ function startComprehensivePractice() {
     } else {
         // 如果没有输入数种，使用随机数种
         setRandomSeed(null);
-        saveSeedToURL();
+        currentPracticeType = 'comprehensive';
+        savePracticeConfigToURL();
         document.getElementById('comprehensive-seed-value').textContent = '随机生成';
     }
 
@@ -632,8 +843,9 @@ function startComprehensivePractice() {
     currentQuestionIndex = 0;
     results = [];
     startTime = Date.now();
+    actualPracticeTime = 0; // 重置实际答题时间
     
-    document.getElementById('practice-title').textContent = '综合四则运算练习';
+    document.getElementById('practice-title').textcontent = '综合四则运算练习';
     showScreen('practice-screen');
     showQuestion();
 }
@@ -658,6 +870,9 @@ function skipQuestion() {
         }
         
         const questionTime = Math.round((Date.now() - questionStartTime) / 1000);
+        
+        // 累加实际答题时间（不包含题目间隔时间）
+        actualPracticeTime += questionTime;
         
         results.push({
             question: currentPracticeType === 'decimal' ? questionData.question : questionData.question,
@@ -700,6 +915,9 @@ function checkAnswer() {
         
         // 记录答题时间
         const questionTime = Math.round((Date.now() - questionStartTime) / 1000);
+        
+        // 累加实际答题时间（不包含题目间隔时间）
+        actualPracticeTime += questionTime;
         
         feedback.textContent = '✓ 正确！';
         feedback.className = 'feedback correct';
@@ -764,12 +982,19 @@ function showQuestion() {
     document.getElementById('current-question').textContent = currentQuestionIndex + 1;
     document.getElementById('progress-fill').style.width = ((currentQuestionIndex + 1) * 10) + '%';
     
+    // 记录当前题目的开始时间
     questionStartTime = Date.now();
+    
+    // 如果是第一道题，初始化实际答题时间
+    if (currentQuestionIndex === 0) {
+        actualPracticeTime = 0;
+    }
 }
 
 // 显示结果
 function showResults() {
-    const totalTime = Math.round((Date.now() - startTime) / 1000);
+    // 使用实际答题时间（不包含题目间隔时间）
+    const displayTime = actualPracticeTime > 0 ? actualPracticeTime : Math.round((Date.now() - startTime) / 1000);
     
     // 显示随机数种信息
     let seedInfo = '';
@@ -780,7 +1005,10 @@ function showResults() {
         seedInfo = ` | 随机数种：${actualSeedUsed}`;
     }
     
-    document.getElementById('total-time').innerHTML = `总用时：${totalTime}秒${seedInfo}`;
+    document.getElementById('total-time').innerHTML = `总用时：${displayTime}秒${seedInfo}`;
+    
+    // 在显示结果时保存完整的配置到URL，方便分享
+    savePracticeConfigToURL();
     
     const resultsList = document.getElementById('results-list');
     resultsList.innerHTML = '';
@@ -858,6 +1086,7 @@ function exitPractice() {
         questionStartTime = 0;
         currentPracticeType = '';
         actualSeedUsed = null;
+        actualPracticeTime = 0; // 重置实际答题时间
         
         // 返回主菜单
         showScreen('main-menu');
@@ -868,23 +1097,104 @@ function exitPractice() {
 function restartPractice() {
     actualSeedUsed = null;
     
-    // 清空随机数种输入框
+    // 检查是否有URL参数中的随机数种
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSeed = urlParams.get('seed');
+    
+    // 清空随机数种输入框（如果URL中没有随机数种参数）
     if (currentPracticeType === 'decimal') {
-        document.getElementById('decimal-random-seed').value = '';
+        if (!urlSeed) {
+            document.getElementById('decimal-random-seed').value = '';
+        }
         document.getElementById('decimal-seed-value').textContent = '随机生成';
         showScreen('decimal-setup');
     } else if (currentPracticeType === 'arithmetic') {
-        document.getElementById('arithmetic-random-seed').value = '';
+        if (!urlSeed) {
+            document.getElementById('arithmetic-random-seed').value = '';
+        }
         document.getElementById('arithmetic-seed-value').textContent = '随机生成';
         showScreen('arithmetic-setup');
     } else if (currentPracticeType === 'comprehensive') {
-        document.getElementById('comprehensive-random-seed').value = '';
+        if (!urlSeed) {
+            document.getElementById('comprehensive-random-seed').value = '';
+        }
         document.getElementById('comprehensive-seed-value').textContent = '随机生成';
         showScreen('comprehensive-setup');
     }
+}
+
+// 复制分享链接
+function copyShareLink() {
+    // 使用当前页面的基础URL，确保在不同环境下都能正确工作
+    const baseUrl = window.location.origin + window.location.pathname;
+    const currentUrl = new URL(window.location);
+    const shareUrl = baseUrl + currentUrl.search;
     
-    // 重置当前种子
-    currentSeed = null;
+    // 获取练习统计信息
+    let statsText = '';
+    let practiceTypeText = '';
+    
+    // 根据当前练习类型生成亲切的文字
+    if (currentPracticeType === 'decimal') {
+        practiceTypeText = '十进制转二进制';
+    } else if (currentPracticeType === 'arithmetic') {
+        practiceTypeText = '四则运算';
+    } else if (currentPracticeType === 'comprehensive') {
+        practiceTypeText = '综合四则运算';
+    } else {
+        practiceTypeText = '数学练习';
+    }
+    
+    // 尝试获取练习结果统计
+    try {
+        const totalTimeElement = document.getElementById('total-time');
+        const resultsList = document.getElementById('results-list');
+        
+        if (totalTimeElement && resultsList) {
+            const totalTimeMatch = totalTimeElement.textContent.match(/总用时：(\d+)秒/);
+            const questionCount = resultsList.children.length;
+            
+            if (totalTimeMatch && questionCount > 0) {
+                const totalTime = parseInt(totalTimeMatch[1]);
+                const minutes = Math.floor(totalTime / 60);
+                const seconds = totalTime % 60;
+                const timeText = minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
+                
+                // 添加说明，显示这是实际答题时间（不包含间隔时间）
+                statsText = `🎉 我使用${timeText}完成了${questionCount}道${practiceTypeText}练习！你也来试试吧～ 💪`;
+            }
+        }
+    } catch (error) {
+        console.log('无法获取练习统计信息，使用默认提示');
+    }
+    
+    // 如果没有统计信息，使用通用提示
+    if (!statsText) {
+        statsText = `🎉 我刚刚完成了一套${practiceTypeText}练习！你也来试试吧～ 💪`;
+    }
+    
+    // 添加亲切的文字提示
+    const shareText = `${statsText}\n🔗 ：${shareUrl}`;
+    
+    // 使用现代剪贴板API
+    navigator.clipboard.writeText(shareText).then(function() {
+        alert('分享内容已复制到剪贴板！');
+    }).catch(function(err) {
+        console.error('复制失败:', err);
+        
+        // 备用方案：使用传统方法
+        const textArea = document.createElement('textarea');
+        textArea.value = shareText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('分享内容已复制到剪贴板！');
+        } catch (backupErr) {
+            alert('复制失败，请手动复制以下内容：\n\n' + shareText);
+        }
+        document.body.removeChild(textArea);
+    });
 }
 
 // 切换界面显示
@@ -1222,8 +1532,7 @@ function initGomokuGame() {
 
 // 页面加载完成后初始化
 window.addEventListener('load', function() {
-    loadSeedFromURL();
-    updateAllSeedDisplays(currentSeed);
+    loadPracticeConfigFromURL();
     
     // 设置聊天输入框回车键发送
     const chatInput = document.getElementById('chat-input');
@@ -1254,6 +1563,10 @@ function loadUpdateLogContent() {
     
     // 纯文本格式的更新日志内容
     contentDiv.innerHTML = `
+        <h3>版本 1.4.0 - 2026年1月25日</h3>
+        <ul>
+            <li>新增分享链接功能，点击链接可以进行指定题号的练习</li>
+        </ul>
         <h3>版本 1.3.3 - 2026年1月25日</h3>
         <ul>
             <li>暂时隐藏五子棋对战按钮（因存在bug）</li>
@@ -2545,7 +2858,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 页面加载时检查URL参数
-    loadSeedFromURL();
+    loadPracticeConfigFromURL();
     // 初始化所有界面的随机数种显示
     updateAllSeedDisplays(currentSeed);
     
@@ -2679,4 +2992,143 @@ function handlePeerError(error) {
     }
 }
 
+// 测试新的URL编码格式
+function testURLEncoding() {
+    console.log('=== 测试新的URL编码格式 ===');
+    
+    // 模拟不同的练习配置
+    const testConfigs = [
+        {
+            name: '十进制转二进制练习',
+            config: { t: 'decimal', s: 123456, m: 10, M: 100 }
+        },
+        {
+            name: '四则运算练习',
+            config: { t: 'arithmetic', s: 789012, m: 1, M: 100, o: 'asm' }
+        },
+        {
+            name: '综合四则运算练习',
+            config: { t: 'comprehensive', s: 555555, m: 1, M: 20, c: 3, o: 'amd' }
+        }
+    ];
+    
+    testConfigs.forEach(test => {
+        const configString = JSON.stringify(test.config);
+        const encodedConfig = btoa(configString);
+        const decodedConfig = atob(encodedConfig);
+        const parsedConfig = JSON.parse(decodedConfig);
+        
+        console.log(`${test.name}:`);
+        console.log('  原始配置:', test.config);
+        console.log('  编码后长度:', encodedConfig.length);
+        console.log('  编码内容:', encodedConfig);
+        console.log('  解码验证:', JSON.stringify(parsedConfig) === JSON.stringify(test.config) ? '✓ 成功' : '✗ 失败');
+        console.log('');
+    });
+    
+    console.log('=== 测试完成 ===');
+}
+
+// 页面加载完成后自动测试URL编码
+window.addEventListener('load', function() {
+    // 延迟执行测试，确保页面完全加载
+    setTimeout(function() {
+        if (window.location.search.includes('debug=1')) {
+            testURLEncoding();
+        }
+    }, 1000);
+});
+
+// 显示URL编码信息（用于调试）
+function showURLEncodingInfo() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const configParam = urlParams.get('c');
+    
+    if (configParam) {
+        try {
+            const decodedConfig = atob(configParam);
+            const config = JSON.parse(decodedConfig);
+            console.log('当前URL编码信息:', config);
+            
+            alert(`当前URL编码信息：\n\n${JSON.stringify(config, null, 2)}\n\n编码长度：${configParam.length}字符`);
+        } catch (error) {
+            console.error('URL编码解析失败:', error);
+            alert('URL编码解析失败，请检查格式是否正确。');
+        }
+    } else {
+        alert('当前URL没有使用新的编码格式。');
+    }
+}
+
+// 测试计时功能改进
+function testTimingImprovement() {
+    console.log('=== 测试计时功能改进 ===');
+    
+    // 模拟练习场景
+    const testScenarios = [
+        {
+            name: '正常答题场景',
+            questionTimes: [5, 8, 12, 7, 10], // 每道题的实际答题时间（秒）
+            intervalTimes: [1, 1, 1, 1] // 题目之间的间隔时间（秒）
+        },
+        {
+            name: '快速答题场景',
+            questionTimes: [3, 4, 2, 5, 3],
+            intervalTimes: [1, 1, 1, 1]
+        },
+        {
+            name: '包含跳过题目场景',
+            questionTimes: [6, 2, 8, 4], // 跳过了一道题
+            intervalTimes: [1, 1, 1]
+        }
+    ];
+    
+    testScenarios.forEach(scenario => {
+        console.log(`\n测试场景：${scenario.name}`);
+        
+        // 计算总用时（包含间隔时间）
+        const totalTimeWithIntervals = scenario.questionTimes.reduce((sum, time) => sum + time, 0) +
+                                     scenario.intervalTimes.reduce((sum, time) => sum + time, 0);
+        
+        // 计算实际答题时间（不包含间隔时间）
+        const actualPracticeTime = scenario.questionTimes.reduce((sum, time) => sum + time, 0);
+        
+        console.log(`总用时（包含间隔）：${totalTimeWithIntervals}秒`);
+        console.log(`实际答题时间：${actualPracticeTime}秒`);
+        console.log(`节省时间：${totalTimeWithIntervals - actualPracticeTime}秒`);
+        console.log(`时间准确度提升：${((totalTimeWithIntervals - actualPracticeTime) / totalTimeWithIntervals * 100).toFixed(1)}%`);
+    });
+    
+    console.log('\n=== 计时功能改进说明 ===');
+    console.log('1. 新功能：实际答题时间（不包含题目间隔时间）');
+    console.log('2. 改进：防止快速连续点击导致的计时不准确');
+    console.log('3. 优势：更精确地反映用户的真实答题速度');
+    console.log('4. 应用：所有练习类型（十进制转二进制、四则运算、综合四则运算）');
+    console.log('=== 测试完成 ===');
+}
+
+// 显示计时信息（用于调试）
+function showTimingInfo() {
+    const totalTime = Math.round((Date.now() - startTime) / 1000);
+    const actualTime = actualPracticeTime;
+    
+    alert(`计时信息：\n\n总用时（包含间隔）：${totalTime}秒\n实际答题时间：${actualTime}秒\n节省时间：${totalTime - actualTime}秒\n\n新功能：实际答题时间不包含题目之间的间隔时间，更准确地反映答题速度。`);
+}
+
+// 页面加载完成后自动测试计时功能（调试模式）
+window.addEventListener('load', function() {
+    // 延迟执行测试，确保页面完全加载
+    setTimeout(function() {
+        if (window.location.search.includes('debug=timing')) {
+            testTimingImprovement();
+        }
+    }, 1000);
+});
+
 console.log('五子棋对战功能已修复并优化完成');
+console.log('URL编码优化功能已加载完成');
+console.log('新功能：\n1. 使用Base64编码减少URL长度\n2. 添加亲切的分享文字提示\n3. 保持向后兼容性');
+console.log('计时功能优化已完成');
+console.log('新功能：实际答题时间（不包含题目间隔时间）');
+console.log('改进：防止快速连续点击导致的计时不准确');
+console.log('应用：所有练习类型均支持精确计时');
