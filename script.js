@@ -1249,6 +1249,14 @@ function copyShareLink() {
         practiceTypeText = '数学练习';
     }
     
+    // 获取当前随机数种信息
+    let seedInfo = '';
+    if (currentSeed) {
+        seedInfo = `（${currentSeed}）`;
+    } else if (actualSeedUsed) {
+        seedInfo = `（${actualSeedUsed}）`;
+    }
+    
     // 尝试获取练习结果统计
     try {
         const totalTimeElement = document.getElementById('total-time');
@@ -1265,7 +1273,7 @@ function copyShareLink() {
                 const timeText = minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
                 
                 // 添加说明，显示这是实际答题时间（不包含间隔时间）
-                statsText = `🎉 我使用${timeText}完成了${questionCount}道${practiceTypeText}练习！你也来试试吧～ 💪`;
+                statsText = `🎉 我使用${timeText}完成了${questionCount}道${practiceTypeText}练习${seedInfo}！你也来试试吧～ 💪`;
             }
         }
     } catch (error) {
@@ -1274,7 +1282,7 @@ function copyShareLink() {
     
     // 如果没有统计信息，使用通用提示
     if (!statsText) {
-        statsText = `🎉 我刚刚完成了一套${practiceTypeText}练习！你也来试试吧～ 💪`;
+        statsText = `🎉 我刚刚完成了一套${practiceTypeText}练习${seedInfo}！你也来试试吧～ 💪`;
     }
     
     // 添加亲切的文字提示
@@ -1667,6 +1675,10 @@ function loadUpdateLogContent() {
     
     // 纯文本格式的更新日志内容
     contentDiv.innerHTML = `
+        <h3>版本 1.4.2 - 2026年1月26日</h3>
+        <ul>
+            <li>分享链接的文字提示中加上了随机数种，用于用户判断自己打开的网页是否正确</li>
+        </ul>
         <h3>版本 1.4.1 - 2026年1月26日</h3>
         <ul>
             <li>尝试修复中途退出后分享链接复制异常的bug</li>
