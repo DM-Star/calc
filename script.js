@@ -845,7 +845,7 @@ function startComprehensivePractice() {
     startTime = Date.now();
     actualPracticeTime = 0; // 重置实际答题时间
     
-    document.getElementById('practice-title').textcontent = '综合四则运算练习';
+    document.getElementById('practice-title').textContent = '综合四则运算练习';
     showScreen('practice-screen');
     showQuestion();
 }
@@ -1086,40 +1086,144 @@ function exitPractice() {
         questionStartTime = 0;
         currentPracticeType = '';
         actualSeedUsed = null;
+        currentSeed = null;
         actualPracticeTime = 0; // 重置实际答题时间
+        
+        // 关键修改：退出练习时也完全清空所有随机数种相关的显示和URL参数
+        const seedInputs = [
+            'decimal-random-seed',
+            'arithmetic-random-seed',
+            'comprehensive-random-seed'
+        ];
+        
+        const seedDisplayElements = [
+            'decimal-seed-value',
+            'arithmetic-seed-value',
+            'comprehensive-seed-value'
+        ];
+        
+        // 清空所有输入框
+        seedInputs.forEach(inputId => {
+            const inputElement = document.getElementById(inputId);
+            if (inputElement) {
+                inputElement.value = '';
+            }
+        });
+        
+        // 清空所有显示文本框
+        seedDisplayElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = '随机生成';
+            }
+        });
+        
+        // 清除URL参数中的随机数种
+        clearURLSeedParameter();
         
         // 返回主菜单
         showScreen('main-menu');
+        
+        console.log('退出练习：所有随机数种已完全清空，包括URL参数');
     }
 }
 
 // 重新开始练习
 function restartPractice() {
     actualSeedUsed = null;
+    currentSeed = null;
     
-    // 检查是否有URL参数中的随机数种
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlSeed = urlParams.get('seed');
+    // 关键修改：完全清空所有随机数种相关的显示和URL参数
+    // 1. 清空所有随机数种输入框
+    // 2. 清空所有显示随机数种的文本框
+    // 3. 清除URL参数中的随机数种
     
-    // 清空随机数种输入框（如果URL中没有随机数种参数）
-    if (currentPracticeType === 'decimal') {
-        if (!urlSeed) {
-            document.getElementById('decimal-random-seed').value = '';
+    const seedInputs = [
+        'decimal-random-seed',
+        'arithmetic-random-seed',
+        'comprehensive-random-seed'
+    ];
+    
+    const seedDisplayElements = [
+        'decimal-seed-value',
+        'arithmetic-seed-value',
+        'comprehensive-seed-value'
+    ];
+    
+    // 清空所有输入框
+    seedInputs.forEach(inputId => {
+        const inputElement = document.getElementById(inputId);
+        if (inputElement) {
+            inputElement.value = '';
         }
-        document.getElementById('decimal-seed-value').textContent = '随机生成';
+    });
+    
+    // 清空所有显示文本框
+    seedDisplayElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = '随机生成';
+        }
+    });
+    
+    // 清除URL参数中的随机数种
+    clearURLSeedParameter();
+    
+    // 根据当前练习类型显示对应的设置界面
+    if (currentPracticeType === 'decimal') {
         showScreen('decimal-setup');
     } else if (currentPracticeType === 'arithmetic') {
-        if (!urlSeed) {
-            document.getElementById('arithmetic-random-seed').value = '';
-        }
-        document.getElementById('arithmetic-seed-value').textContent = '随机生成';
         showScreen('arithmetic-setup');
     } else if (currentPracticeType === 'comprehensive') {
-        if (!urlSeed) {
-            document.getElementById('comprehensive-random-seed').value = '';
-        }
-        document.getElementById('comprehensive-seed-value').textContent = '随机生成';
         showScreen('comprehensive-setup');
+    }
+    
+    console.log('重新开始练习：所有随机数种已完全清空，包括URL参数');
+}
+
+// 清除URL参数中的随机数种
+function clearURLSeedParameter() {
+    const url = new URL(window.location);
+    const urlParams = new URLSearchParams(url.search);
+    
+    // 清除旧的seed参数
+    if (urlParams.has('seed')) {
+        urlParams.delete('seed');
+    }
+    
+    // 清除新的配置参数中的seed
+    const configParam = urlParams.get('c');
+    if (configParam) {
+        try {
+            const decodedConfig = atob(configParam);
+            const config = JSON.parse(decodedConfig);
+            
+            // 移除配置中的seed相关字段
+            delete config.s;
+            delete config.seed;
+            
+            // 如果配置中还有其他字段，更新URL参数
+            if (Object.keys(config).length > 0) {
+                const newConfigString = JSON.stringify(config);
+                const newEncodedConfig = btoa(newConfigString);
+                urlParams.set('c', newEncodedConfig);
+            } else {
+                // 如果配置为空，删除整个c参数
+                urlParams.delete('c');
+            }
+            
+            url.search = urlParams.toString();
+            window.history.replaceState({}, '', url);
+        } catch (error) {
+            console.warn('清除URL参数失败:', error);
+        }
+    } else if (urlParams.toString()) {
+        // 如果没有c参数但有其他参数，直接更新URL
+        url.search = urlParams.toString();
+        window.history.replaceState({}, '', url);
+    } else {
+        // 如果没有参数，清除所有参数
+        window.history.replaceState({}, '', window.location.pathname);
     }
 }
 
@@ -1563,6 +1667,10 @@ function loadUpdateLogContent() {
     
     // 纯文本格式的更新日志内容
     contentDiv.innerHTML = `
+        <h3>版本 1.4.1 - 2026年1月26日</h3>
+        <ul>
+            <li>尝试修复中途退出后分享链接复制异常的bug</li>
+        </ul>
         <h3>版本 1.4.0 - 2026年1月25日</h3>
         <ul>
             <li>新增分享链接功能，点击链接可以进行指定题号的练习</li>
@@ -2895,49 +3003,6 @@ window.addEventListener('load', function() {
     document.head.appendChild(style);
 });
 
-// 测试棋色分配逻辑
-function testColorAssignment() {
-    console.log('=== 测试棋色分配逻辑 ===');
-    
-    // 测试主机为黑棋的情况
-    isHost = true;
-    isHostIsBlack = true;
-    currentPlayer = 'black';
-    
-    const myColorHostBlack = (isHost ? isHostIsBlack : !isHostIsBlack) ? 'black' : 'white';
-    const isMyTurnHostBlack = currentPlayer === myColorHostBlack;
-    console.log(`主机为黑棋：我的颜色=${myColorHostBlack}, 是否轮到我=${isMyTurnHostBlack}`);
-    
-    // 测试主机为白棋的情况
-    isHost = true;
-    isHostIsBlack = false;
-    currentPlayer = 'white';
-    
-    const myColorHostWhite = (isHost ? isHostIsBlack : !isHostIsBlack) ? 'black' : 'white';
-    const isMyTurnHostWhite = currentPlayer === myColorHostWhite;
-    console.log(`主机为白棋：我的颜色=${myColorHostWhite}, 是否轮到我=${isMyTurnHostWhite}`);
-    
-    // 测试客户端为黑棋的情况
-    isHost = false;
-    isHostIsBlack = false; // 客户端为黑棋意味着主机为白棋
-    currentPlayer = 'black';
-    
-    const myColorClientBlack = (isHost ? isHostIsBlack : !isHostIsBlack) ? 'black' : 'white';
-    const isMyTurnClientBlack = currentPlayer === myColorClientBlack;
-    console.log(`客户端为黑棋：我的颜色=${myColorClientBlack}, 是否轮到我=${isMyTurnClientBlack}`);
-    
-    // 测试客户端为白棋的情况
-    isHost = false;
-    isHostIsBlack = true; // 客户端为白棋意味着主机为黑棋
-    currentPlayer = 'white';
-    
-    const myColorClientWhite = (isHost ? isHostIsBlack : !isHostIsBlack) ? 'black' : 'white';
-    const isMyTurnClientWhite = currentPlayer === myColorClientWhite;
-    console.log(`客户端为白棋：我的颜色=${myColorClientWhite}, 是否轮到我=${isMyTurnClientWhite}`);
-    
-    console.log('=== 测试完成 ===');
-}
-
 // 添加连接状态检查函数
 function checkConnectionStatus() {
     if (!gomokuPeer) {
@@ -2991,144 +3056,3 @@ function handlePeerError(error) {
         }, 2000);
     }
 }
-
-// 测试新的URL编码格式
-function testURLEncoding() {
-    console.log('=== 测试新的URL编码格式 ===');
-    
-    // 模拟不同的练习配置
-    const testConfigs = [
-        {
-            name: '十进制转二进制练习',
-            config: { t: 'decimal', s: 123456, m: 10, M: 100 }
-        },
-        {
-            name: '四则运算练习',
-            config: { t: 'arithmetic', s: 789012, m: 1, M: 100, o: 'asm' }
-        },
-        {
-            name: '综合四则运算练习',
-            config: { t: 'comprehensive', s: 555555, m: 1, M: 20, c: 3, o: 'amd' }
-        }
-    ];
-    
-    testConfigs.forEach(test => {
-        const configString = JSON.stringify(test.config);
-        const encodedConfig = btoa(configString);
-        const decodedConfig = atob(encodedConfig);
-        const parsedConfig = JSON.parse(decodedConfig);
-        
-        console.log(`${test.name}:`);
-        console.log('  原始配置:', test.config);
-        console.log('  编码后长度:', encodedConfig.length);
-        console.log('  编码内容:', encodedConfig);
-        console.log('  解码验证:', JSON.stringify(parsedConfig) === JSON.stringify(test.config) ? '✓ 成功' : '✗ 失败');
-        console.log('');
-    });
-    
-    console.log('=== 测试完成 ===');
-}
-
-// 页面加载完成后自动测试URL编码
-window.addEventListener('load', function() {
-    // 延迟执行测试，确保页面完全加载
-    setTimeout(function() {
-        if (window.location.search.includes('debug=1')) {
-            testURLEncoding();
-        }
-    }, 1000);
-});
-
-// 显示URL编码信息（用于调试）
-function showURLEncodingInfo() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const configParam = urlParams.get('c');
-    
-    if (configParam) {
-        try {
-            const decodedConfig = atob(configParam);
-            const config = JSON.parse(decodedConfig);
-            console.log('当前URL编码信息:', config);
-            
-            alert(`当前URL编码信息：\n\n${JSON.stringify(config, null, 2)}\n\n编码长度：${configParam.length}字符`);
-        } catch (error) {
-            console.error('URL编码解析失败:', error);
-            alert('URL编码解析失败，请检查格式是否正确。');
-        }
-    } else {
-        alert('当前URL没有使用新的编码格式。');
-    }
-}
-
-// 测试计时功能改进
-function testTimingImprovement() {
-    console.log('=== 测试计时功能改进 ===');
-    
-    // 模拟练习场景
-    const testScenarios = [
-        {
-            name: '正常答题场景',
-            questionTimes: [5, 8, 12, 7, 10], // 每道题的实际答题时间（秒）
-            intervalTimes: [1, 1, 1, 1] // 题目之间的间隔时间（秒）
-        },
-        {
-            name: '快速答题场景',
-            questionTimes: [3, 4, 2, 5, 3],
-            intervalTimes: [1, 1, 1, 1]
-        },
-        {
-            name: '包含跳过题目场景',
-            questionTimes: [6, 2, 8, 4], // 跳过了一道题
-            intervalTimes: [1, 1, 1]
-        }
-    ];
-    
-    testScenarios.forEach(scenario => {
-        console.log(`\n测试场景：${scenario.name}`);
-        
-        // 计算总用时（包含间隔时间）
-        const totalTimeWithIntervals = scenario.questionTimes.reduce((sum, time) => sum + time, 0) +
-                                     scenario.intervalTimes.reduce((sum, time) => sum + time, 0);
-        
-        // 计算实际答题时间（不包含间隔时间）
-        const actualPracticeTime = scenario.questionTimes.reduce((sum, time) => sum + time, 0);
-        
-        console.log(`总用时（包含间隔）：${totalTimeWithIntervals}秒`);
-        console.log(`实际答题时间：${actualPracticeTime}秒`);
-        console.log(`节省时间：${totalTimeWithIntervals - actualPracticeTime}秒`);
-        console.log(`时间准确度提升：${((totalTimeWithIntervals - actualPracticeTime) / totalTimeWithIntervals * 100).toFixed(1)}%`);
-    });
-    
-    console.log('\n=== 计时功能改进说明 ===');
-    console.log('1. 新功能：实际答题时间（不包含题目间隔时间）');
-    console.log('2. 改进：防止快速连续点击导致的计时不准确');
-    console.log('3. 优势：更精确地反映用户的真实答题速度');
-    console.log('4. 应用：所有练习类型（十进制转二进制、四则运算、综合四则运算）');
-    console.log('=== 测试完成 ===');
-}
-
-// 显示计时信息（用于调试）
-function showTimingInfo() {
-    const totalTime = Math.round((Date.now() - startTime) / 1000);
-    const actualTime = actualPracticeTime;
-    
-    alert(`计时信息：\n\n总用时（包含间隔）：${totalTime}秒\n实际答题时间：${actualTime}秒\n节省时间：${totalTime - actualTime}秒\n\n新功能：实际答题时间不包含题目之间的间隔时间，更准确地反映答题速度。`);
-}
-
-// 页面加载完成后自动测试计时功能（调试模式）
-window.addEventListener('load', function() {
-    // 延迟执行测试，确保页面完全加载
-    setTimeout(function() {
-        if (window.location.search.includes('debug=timing')) {
-            testTimingImprovement();
-        }
-    }, 1000);
-});
-
-console.log('五子棋对战功能已修复并优化完成');
-console.log('URL编码优化功能已加载完成');
-console.log('新功能：\n1. 使用Base64编码减少URL长度\n2. 添加亲切的分享文字提示\n3. 保持向后兼容性');
-console.log('计时功能优化已完成');
-console.log('新功能：实际答题时间（不包含题目间隔时间）');
-console.log('改进：防止快速连续点击导致的计时不准确');
-console.log('应用：所有练习类型均支持精确计时');
