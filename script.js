@@ -7,6 +7,7 @@ let currentPracticeType = '';
 let currentSeed = null;
 let actualSeedUsed = null; // 记录实际使用的随机数种
 let actualPracticeTime = 0; // 记录实际答题时间（不包含题目间隔时间）
+let penaltySeconds = 0; // 记录当前题目的累计罚时
 
 // 五子棋对战相关变量
 let gomokuPeer = null;
@@ -871,8 +872,8 @@ function skipQuestion() {
         
         const questionTime = Math.round((Date.now() - questionStartTime) / 1000);
         
-        // 累加实际答题时间（不包含题目间隔时间）
-        actualPracticeTime += questionTime;
+        // 累加实际答题时间（不包含题目间隔时间），包含罚时
+        actualPracticeTime += questionTime + penaltySeconds;
         
         results.push({
             question: currentPracticeType === 'decimal' ? questionData.question : questionData.question,
@@ -880,8 +881,12 @@ function skipQuestion() {
             correct: false,
             userAnswer: '跳过',
             correctAnswer: questionData.answer,
-            skipped: true
+            skipped: true,
+            penaltyTime: penaltySeconds // 记录跳题时的罚时信息
         });
+        
+        // 重置罚时计数器
+        penaltySeconds = 0;
         
         currentQuestionIndex++;
         if (currentQuestionIndex < questions.length) {
@@ -913,24 +918,28 @@ function checkAnswer() {
         // 禁用提交按钮，防止重复提交
         submitButton.disabled = true;
         
-        // 记录答题时间
+        // 记录答题时间（包含可能的罚时）
         const questionTime = Math.round((Date.now() - questionStartTime) / 1000);
         
-        // 累加实际答题时间（不包含题目间隔时间）
-        actualPracticeTime += questionTime;
+        // 累加实际答题时间（不包含题目间隔时间），包含罚时
+        actualPracticeTime += questionTime + penaltySeconds;
         
         feedback.textContent = '✓ 正确！';
         feedback.className = 'feedback correct';
         
         const result = {
             question: currentPracticeType === 'decimal' ? questions[currentQuestionIndex] : questions[currentQuestionIndex].question,
-            time: questionTime,
+            time: questionTime + penaltySeconds, // 总时间包含罚时
             correct: true,
             userAnswer: userAnswer,
-            correctAnswer: correctAnswer
+            correctAnswer: correctAnswer,
+            penaltyTime: penaltySeconds // 记录罚时信息
         };
         
         results.push(result);
+        
+        // 重置罚时计数器
+        penaltySeconds = 0;
         
         setTimeout(() => {
             currentQuestionIndex++;
@@ -941,9 +950,13 @@ function checkAnswer() {
             }
         }, 1000);
     } else {
-        feedback.textContent = '✗ 错误！请重新输入正确的答案。';
+        // 答错时增加15秒罚时
+        penaltySeconds += 15;
+        feedback.textContent = `✗ 错误！罚时+15秒（总罚时：${penaltySeconds}秒。`;
         feedback.className = 'feedback wrong';
-        // 答错时不记录时间，继续计时直到答对
+        
+        // 更新答题开始时间，模拟时间增加
+        questionStartTime -= 15000; // 减去15秒，使后续计算的时间包含罚时
     }
 }
 
@@ -985,6 +998,9 @@ function showQuestion() {
     // 记录当前题目的开始时间
     questionStartTime = Date.now();
     
+    // 重置当前题目的罚时计数器
+    penaltySeconds = 0;
+    
     // 如果是第一道题，初始化实际答题时间
     if (currentQuestionIndex === 0) {
         actualPracticeTime = 0;
@@ -993,7 +1009,7 @@ function showQuestion() {
 
 // 显示结果
 function showResults() {
-    // 使用实际答题时间（不包含题目间隔时间）
+    // 使用实际答题时间（不包含题目间隔时间），结果中已经包含了罚时
     const displayTime = actualPracticeTime > 0 ? actualPracticeTime : Math.round((Date.now() - startTime) / 1000);
     
     // 显示随机数种信息
@@ -1062,6 +1078,11 @@ function showResults() {
             - 状态：${status}
         `;
         
+        // 显示罚时信息
+        if (result.penaltyTime && result.penaltyTime > 0) {
+            resultHTML += `- 罚时：${result.penaltyTime}秒`;
+        }
+        
         if (result.skipped) {
             resultHTML += `- 正确答案：${result.correctAnswer}`;
         } else if (!result.correct) {
@@ -1088,6 +1109,7 @@ function exitPractice() {
         actualSeedUsed = null;
         currentSeed = null;
         actualPracticeTime = 0; // 重置实际答题时间
+        penaltySeconds = 0; // 重置罚时计数器
         
         // 关键修改：退出练习时也完全清空所有随机数种相关的显示和URL参数
         const seedInputs = [
@@ -1132,6 +1154,7 @@ function exitPractice() {
 function restartPractice() {
     actualSeedUsed = null;
     currentSeed = null;
+    penaltySeconds = 0; // 重置罚时计数器
     
     // 关键修改：完全清空所有随机数种相关的显示和URL参数
     // 1. 清空所有随机数种输入框
@@ -1272,8 +1295,16 @@ function copyShareLink() {
                 const seconds = totalTime % 60;
                 const timeText = minutes > 0 ? `${minutes}分${seconds}秒` : `${seconds}秒`;
                 
-                // 添加说明，显示这是实际答题时间（不包含间隔时间）
-                statsText = `🎉 我使用${timeText}完成了${questionCount}道${practiceTypeText}练习${seedInfo}！你也来试试吧～ 💪`;
+                // 计算总罚时
+                const totalPenaltyTime = results.reduce((sum, result) => sum + (result.penaltyTime || 0), 0);
+                
+                // 添加说明，显示这是实际答题时间（不包含间隔时间）和罚时信息
+                let penaltyInfo = '';
+                if (totalPenaltyTime > 0) {
+                    penaltyInfo = `（含${totalPenaltyTime}秒罚时）`;
+                }
+                
+                statsText = `🎉 我使用${timeText}${penaltyInfo}完成了${questionCount}道${practiceTypeText}练习${seedInfo}！你也来试试吧～ 💪`;
             }
         }
     } catch (error) {
@@ -1675,6 +1706,10 @@ function loadUpdateLogContent() {
     
     // 纯文本格式的更新日志内容
     contentDiv.innerHTML = `
+        <h3>版本 1.5.0 - 2026年1月27日</h3>
+        <ul>
+            <li>增加罚时机制</li>
+        </ul>
         <h3>版本 1.4.2 - 2026年1月26日</h3>
         <ul>
             <li>分享链接的文字提示中加上了随机数种，用于用户判断自己打开的网页是否正确</li>
