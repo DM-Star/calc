@@ -872,8 +872,8 @@ function skipQuestion() {
         
         const questionTime = Math.round((Date.now() - questionStartTime) / 1000);
         
-        // 累加实际答题时间（不包含题目间隔时间），包含罚时
-        actualPracticeTime += questionTime + penaltySeconds;
+        // 累加实际答题时间（不包含题目间隔时间），时间已经通过修改questionStartTime包含了罚时
+        actualPracticeTime += questionTime;
         
         results.push({
             question: currentPracticeType === 'decimal' ? questionData.question : questionData.question,
@@ -921,15 +921,15 @@ function checkAnswer() {
         // 记录答题时间（包含可能的罚时）
         const questionTime = Math.round((Date.now() - questionStartTime) / 1000);
         
-        // 累加实际答题时间（不包含题目间隔时间），包含罚时
-        actualPracticeTime += questionTime + penaltySeconds;
+        // 累加实际答题时间（不包含题目间隔时间），时间已经通过修改questionStartTime包含了罚时
+        actualPracticeTime += questionTime;
         
         feedback.textContent = '✓ 正确！';
         feedback.className = 'feedback correct';
         
         const result = {
             question: currentPracticeType === 'decimal' ? questions[currentQuestionIndex] : questions[currentQuestionIndex].question,
-            time: questionTime + penaltySeconds, // 总时间包含罚时
+            time: questionTime, // 时间已经通过修改questionStartTime包含了罚时
             correct: true,
             userAnswer: userAnswer,
             correctAnswer: correctAnswer,
@@ -1706,6 +1706,10 @@ function loadUpdateLogContent() {
     
     // 纯文本格式的更新日志内容
     contentDiv.innerHTML = `
+        <h3>版本 1.5.1 - 2026年1月27日</h3>
+        <ul>
+            <li>修复了双倍罚时的bug</li>
+        </ul>
         <h3>版本 1.5.0 - 2026年1月27日</h3>
         <ul>
             <li>增加罚时机制</li>
