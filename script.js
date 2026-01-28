@@ -1706,6 +1706,10 @@ function loadUpdateLogContent() {
     
     // 纯文本格式的更新日志内容
     contentDiv.innerHTML = `
+        <h3>版本 2.0.0 - 2026年1月27日</h3>
+        <ul>
+            <li>增加了观察力训练，包括宝石迷阵</li>
+        </ul>
         <h3>版本 1.5.1 - 2026年1月27日</h3>
         <ul>
             <li>修复了双倍罚时的bug</li>

@@ -1,0 +1,703 @@
+/* 宝石迷阵观察力训练 - CSS样式 */
+/* 独立文件，用于分离HTML和CSS代码 */
+
+/* 主容器样式 */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+/* 屏幕切换样式 */
+.screen {
+    display: none;
+}
+
+.screen.active {
+    display: block;
+}
+
+/* 游戏信息面板 */
+.game-info-panel {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.info-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    font-size: 18px;
+    color: #333;
+}
+
+/* 进度条样式 */
+.progress-container {
+    width: 100%;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* 棋盘样式 */
+.board-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.board-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.board-canvas {
+    border: 2px solid #333;
+    background: #f0f0f0;
+    cursor: pointer;
+}
+
+/* 答题区域样式 */
+.answer-area {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.answer-input {
+    width: 60px;
+    height: 40px;
+    font-size: 18px;
+    text-align: center;
+    border: 2px solid #007bff;
+    border-radius: 5px;
+    margin: 0 10px;
+}
+
+.answer-label {
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+/* 控制按钮样式 */
+.control-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.control-btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.primary-btn {
+    background: #007bff;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.secondary-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.secondary-btn:hover {
+    background: #545b62;
+    transform: translateY(-2px);
+}
+
+.success-btn {
+    background: #28a745;
+    color: white;
+}
+
+.success-btn:hover {
+    background: #1e7e34;
+    transform: translateY(-2px);
+}
+
+.warning-btn {
+    background: #ffc107;
+    color: #212529;
+}
+
+.warning-btn:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+}
+
+/* 观察界面样式（已更新为单棋盘显示） */
+
+/* 结果界面样式 */
+.result-item {
+    margin: 15px 0;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.result-item.correct {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+.result-item.incorrect {
+    border-left-color: #dc3545;
+    background: #f8d7da;
+}
+
+.result-stats {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 20px 0;
+    padding: 15px;
+    background: #e9ecef;
+    border-radius: 10px;
+}
+
+/* 反馈信息样式 */
+.feedback {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.feedback.correct {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.feedback.wrong {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* 设置界面样式 */
+.setup-form {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.form-group {
+    margin: 15px 0;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.form-input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* 导航链接样式 */
+.nav-link {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 16px;
+    margin-top: 20px;
+    display: inline-block;
+}
+
+.nav-link:hover {
+    text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .control-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .control-btn {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* 观察力训练区域样式 */
+.observation-section {
+    margin-top: 40px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 15px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.observation-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    z-index: 1;
+}
+
+.observation-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.observation-section h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.observation-section p {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    opacity: 0.9;
+    position: relative;
+    z-index: 2;
+}
+
+.observation-btn {
+    padding: 12px 30px;
+    font-size: 16px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(10px);
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.observation-btn:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.7);
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+}
+
+.observation-btn:active {
+    transform: scale(0.95);
+}
+
+/* 宝石迷阵按钮动画效果 */
+@keyframes gem-shine {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255,255,255,0.8);
+    }
+}
+
+.observation-btn {
+    animation: gem-shine 2s ease-in-out infinite;
+}
+
+/* 单棋盘显示样式 */
+.single-board-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.board-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.nav-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #6c757d;
+    color: white;
+}
+
+.nav-btn:hover {
+    background: #545b62;
+    transform: translateY(-2px);
+}
+
+.nav-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.board-counter {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    min-width: 120px;
+    text-align: center;
+}
+
+.board-display {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #ddd;
+}
+
+.single-board-canvas {
+    border: 2px solid #333;
+    background: #f0f0f0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .observation-section {
+        margin-top: 30px;
+        padding: 15px;
+    }
+    
+    .observation-btn {
+        padding: 15px 25px;
+        font-size: 16px;
+        min-height: 50px;
+    }
+    
+    .board-navigation {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .single-board-canvas {
+        width: 100%;
+        max-width: 350px;
+        height: auto;
+    }
+}
+
+/* 结果界面样式 */
+.result-stats {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.result-stats div {
+    margin: 5px 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.results-list-container {
+    margin: 30px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+
+.results-list-container h3 {
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.result-item {
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 4px solid #ddd;
+    background: #f8f9fa;
+    font-size: 14px;
+}
+
+.result-item.correct {
+    border-left-color: #28a745;
+    background: #d4edda;
+    color: #155724;
+}
+
+.result-item.incorrect {
+    border-left-color: #dc3545;
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.result-observation-container {
+    margin: 30px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+
+.result-observation-container h3 {
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+}
+
+.answer-highlight {
+    margin-top: 15px;
+    text-align: center;
+    padding: 10px;
+    background: #d4edda;
+    border-radius: 5px;
+    border: 1px solid #c3e6cb;
+}
+
+.highlight-label {
+    color: #155724;
+    font-weight: bold;
+}
+
+.navigation-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* 分享区域样式 */
+.share-container {
+    margin: 30px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+
+.share-container h3 {
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+}
+
+.share-info {
+    text-align: center;
+}
+
+.share-info p {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.share-link-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.share-link-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: #f8f9fa;
+    cursor: text;
+}
+
+.share-btn {
+    padding: 8px 16px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    background: #007bff;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+    .share-btn:hover {
+        background: #0056b3;
+        border-color: #0056b3;
+    }
+}
+
+/* 控制按钮样式 */
+.control-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.control-btn {
+    padding: 10px 20px;
+    border: 1px solid;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.control-btn.primary-btn {
+    background: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.control-btn.primary-btn:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+}
+
+.control-btn.secondary-btn {
+    background: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.control-btn.secondary-btn:hover {
+    background: #545b62;
+    border-color: #545b62;
+}
+
+/* 结果列表展开栏样式 */
+.expandable-result-item {
+    margin-bottom: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.result-summary {
+    padding: 12px 15px;
+    background: #f8f9fa;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.result-summary:hover {
+    background: #e9ecef;
+}
+
+.result-text {
+    font-weight: 500;
+}
+
+.expand-icon {
+    font-size: 12px;
+    color: #666;
+    transition: transform 0.2s;
+}
+
+.expand-content {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+}
+
+.result-question-canvas {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #fafafa;
+}
+
+/* 结果项样式 */
+.result-item.correct {
+    color: #28a745;
+}
+
+.result-item.incorrect {
+    color: #dc3545;
+}

@@ -64,6 +64,14 @@ h1 {
     background-color: #e0a800;
 }
 
+.practice-btn.observation {
+    background-color: #17a2b8;
+}
+
+.practice-btn.observation:hover {
+    background-color: #138496;
+}
+
 /* Info按钮样式 */
 .info-btn {
     background-color: #6c757d;
@@ -847,3 +855,4 @@ button:active {
         content: '...';
     }
 }
+
