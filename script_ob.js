@@ -1,4 +1,4 @@
-// 宝石迷阵观察力训练 - JavaScript逻辑
+// 观察力训练 - JavaScript逻辑
 // 独立文件，用于分离HTML和JavaScript代码
 
 // 宝石类型定义
