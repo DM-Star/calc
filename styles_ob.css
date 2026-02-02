@@ -444,8 +444,7 @@
     }
     
     .single-board-canvas {
-        width: 100%;
-        max-width: 350px;
+        width: auto;
         height: auto;
     }
 }

@@ -1706,6 +1706,10 @@ function loadUpdateLogContent() {
     
     // 纯文本格式的更新日志内容
     contentDiv.innerHTML = `
+        <h3>版本 2.0.0 - 2026年1月27日</h3>
+        <ul>
+            <li>增加了蒙德里安格子画</li>
+        </ul>
         <h3>版本 2.0.1 - 2026年1月27日</h3>
         <ul>
         <li>修复了宝石迷阵从棋盘区回到答题区可能不增加跑动时间的bug</li>
@@ -2202,7 +2206,8 @@ function handleBoardClick(event) {
     const x = clientX - rect.left;
     const y = clientY - rect.top;
     
-    const cellSize = 30;
+    // 使用与原画作相同的CellSize计算逻辑
+    const cellSize = Math.min(canvas.width / 15, canvas.height / 15);
     const padding = 15;
     
     // 改进位置计算：使用更精确的坐标转换
@@ -2951,7 +2956,8 @@ function drawBoard() {
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 1;
     
-    const cellSize = 30;
+    // 使用与原画作相同的CellSize计算逻辑
+    const cellSize = Math.min(canvas.width / 15, canvas.height / 15);
     const padding = 15;
     
     // 绘制横线
@@ -2984,7 +2990,8 @@ function drawBoard() {
 
 // 绘制棋子
 function drawPiece(ctx, row, col, color) {
-    const cellSize = 30;
+    // 使用与原画作相同的CellSize计算逻辑
+    const cellSize = Math.min(ctx.canvas.width / 15, ctx.canvas.height / 15);
     const padding = 15;
     
     ctx.beginPath();
