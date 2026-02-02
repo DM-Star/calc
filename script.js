@@ -1706,7 +1706,7 @@ function loadUpdateLogContent() {
     
     // 纯文本格式的更新日志内容
     contentDiv.innerHTML = `
-        <h3>版本 2.0.0 - 2026年1月27日</h3>
+        <h3>版本 2.1.0 - 2026年2月3日</h3>
         <ul>
             <li>增加了蒙德里安格子画</li>
         </ul>
