@@ -275,58 +275,6 @@ function showQuestion() {
     updateNavigationButtons();
 }
 
-// 绘制格子画问题区域（支持动态观察区域大小）
-function drawGridQuestionBoard(region) {
-    const canvas = document.getElementById('grid-question-board');
-    const ctx = canvas.getContext('2d');
-    
-    // 直接从传入的region参数获取实际的剔除区域大小
-    // 确保观察区域大小与画作中实际的剔除区域大小完全一致
-    const actualRegionSize = region && Array.isArray(region) ? region.length : 0;
-    
-    if (actualRegionSize === 0) {
-        console.error('Invalid region parameter:', region);
-        return;
-    }
-    
-    // 获取当前题目对应的画作，直接使用存储的CellSize值
-    const currentQuestion = gridGameState.questions[gridGameState.currentQuestion];
-    const painting = gridGameState.paintings[currentQuestion.paintingIndex];
-    
-    // 直接使用原画作存储的CellSize值，确保完全一致
-    const cellSize = painting.originCellSize || 10; // 使用存储的CellSize值，如果不存在则使用默认值
-    
-    // 根据CellSize和观察区域大小确定画布大小
-    // 画布大小 = CellSize × 观察区域大小
-    const desiredCanvasSize = cellSize * actualRegionSize;
-    if (canvas.width !== desiredCanvasSize || canvas.height !== desiredCanvasSize) {
-        canvas.width = desiredCanvasSize;
-        canvas.height = desiredCanvasSize;
-    }
-    
-    // 清空画布
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // 绘制观察区域（不显示网格线），现在画布大小正好等于观察区域图像大小
-    for (let i = 0; i < actualRegionSize; i++) {
-        // 安全检查：确保region[i]存在
-        if (!region[i] || !Array.isArray(region[i])) {
-            for (let j = 0; j < actualRegionSize; j++) {
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
-            }
-            continue;
-        }
-        
-        for (let j = 0; j < actualRegionSize; j++) {
-            const color = region[i][j] || '#FFFFFF';
-            ctx.fillStyle = color;
-            ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
-            
-            // 不绘制网格线，保持蒙德里安风格的简洁性
-        }
-    }
-}
 // 绘制单个宝石
 function drawGem(ctx, x, y, size, gemType) {
     const centerX = x + size / 2;
@@ -869,21 +817,6 @@ function drawQuestionBoardForResult(canvas, region) {
     }
 }
 
-// 复制分享链接
-function copyShareLink() {
-    const shareLinkInput = document.getElementById('share-link');
-    shareLinkInput.select();
-    shareLinkInput.setSelectionRange(0, 99999);
-    
-    try {
-        navigator.clipboard.writeText(shareLinkInput.value);
-        alert('分享链接已复制到剪贴板！');
-    } catch (err) {
-        console.error('复制失败:', err);
-        alert('复制失败，请手动复制链接');
-    }
-}
-
 // 生成详细结果列表
 function generateResultsList() {
     const resultsList = document.getElementById('results-list');
@@ -1335,52 +1268,6 @@ function drawGridResultBoard(canvas, painting) {
     }
 }
 
-// 生成彩色区域
-function generateColorBlocks(painting, verticalLines, horizontalLines, canvasSize) {
-    // 根据线条划分的区域
-    const allLines = [0, ...verticalLines, ...horizontalLines, canvasSize];
-    const verticalBounds = allLines.filter(line => line <= canvasSize).sort((a, b) => a - b);
-    const horizontalBounds = allLines.filter(line => line <= canvasSize).sort((a, b) => a - b);
-    
-    // 彩色区域颜色（红、黄、蓝）
-    const colorPalette = ['#FF0000', '#FFFF00', '#0000FF'];
-    
-    // 生成彩色区域（每个区域随机选择是否上色）
-    for (let i = 0; i < horizontalBounds.length - 1; i++) {
-        for (let j = 0; j < verticalBounds.length - 1; j++) {
-            const startRow = horizontalBounds[i];
-            const endRow = horizontalBounds[i + 1];
-            const startCol = verticalBounds[j];
-            const endCol = verticalBounds[j + 1];
-            
-            // 区域大小（避免太小的区域）
-            const width = endCol - startCol;
-            const height = endRow - startRow;
-            
-            if (width >= 2 && height >= 2 && Math.random() > 0.6) {
-                // 随机选择颜色
-                const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-                
-                // 记录彩色区域信息
-                painting.colorBlocks.push({
-                    startRow: startRow,
-                    endRow: endRow,
-                    startCol: startCol,
-                    endCol: endCol,
-                    color: color
-                });
-                
-                // 填充颜色（避开线条）
-                for (let row = startRow + 1; row < endRow; row++) {
-                    for (let col = startCol + 1; col < endCol; col++) {
-                        painting.data[row][col] = color;
-                    }
-                }
-            }
-        }
-    }
-}
-
 // 生成格子画问题
 function generateGridQuestions() {
     gridGameState.questions = [];
@@ -1574,79 +1461,6 @@ function showGridPracticeScreen() {
     showScreen('grid-practice-screen');
 }
 
-// 保存格子画当前答案
-function saveGridCurrentAnswer() {
-    const userAnswer = parseInt(document.getElementById('grid-answer-input').value);
-    const question = gridGameState.questions[gridGameState.currentQuestion];
-    
-    const answerValue = isNaN(userAnswer) || userAnswer < 1 || userAnswer > gridGameState.paintingCount ? null : userAnswer;
-    const isCorrect = answerValue === (question.paintingIndex + 1);
-    
-    const questionTime = Math.round((Date.now() - gridGameState.questionStartTime) / 1000);
-    
-    const existingAnswerIndex = gridGameState.answers.findIndex(a => a.questionIndex === gridGameState.currentQuestion);
-    
-    if (existingAnswerIndex !== -1) {
-        // 更新现有答案
-        gridGameState.answers[existingAnswerIndex] = {
-            questionIndex: gridGameState.currentQuestion,
-            userAnswer: answerValue,
-            correctAnswer: question.paintingIndex + 1,
-            time: questionTime,
-            isCorrect: isCorrect,
-            paintingIndex: question.paintingIndex,
-            regionSize: question.regionWidth,
-            startRow: question.startRow,
-            startCol: question.startCol
-        };
-    } else {
-        // 添加新答案
-        gridGameState.answers.push({
-            questionIndex: gridGameState.currentQuestion,
-            userAnswer: answerValue,
-            correctAnswer: question.paintingIndex + 1,
-            time: questionTime,
-            isCorrect: isCorrect,
-            paintingIndex: question.paintingIndex,
-            regionSize: question.regionWidth, // 区域大小（正方形，所以width=height）
-            startRow: question.startRow,
-            startCol: question.startCol
-        });
-    }
-    
-    return answerValue;
-}
-
-// 格子画上一题
-function gridPrevQuestion() {
-    saveGridCurrentAnswer();
-    
-    if (gridGameState.currentQuestion === 0) {
-        gridGameState.currentQuestion = gridGameState.questions.length - 1;
-    } else {
-        gridGameState.currentQuestion--;
-    }
-    
-    gridGameState.questionStartTime = Date.now();
-    showGridQuestion();
-    updateGridNavigationButtons();
-}
-
-// 格子画下一题
-function gridNextQuestion() {
-    saveGridCurrentAnswer();
-    
-    if (gridGameState.currentQuestion === gridGameState.questions.length - 1) {
-        gridGameState.currentQuestion = 0;
-    } else {
-        gridGameState.currentQuestion++;
-    }
-    
-    gridGameState.questionStartTime = Date.now();
-    showGridQuestion();
-    updateGridNavigationButtons();
-}
-
 // 绘制格子画问题区域（支持动态观察区域大小）
 function drawGridQuestionBoard(region) {
     const canvas = document.getElementById('grid-question-board');
@@ -1791,34 +1605,6 @@ function updateGridNavigationButtons() {
     // 暂时不实现特殊逻辑，保持按钮可用状态
 }
 
-// 显示格子画观察界面
-function showGridObservationScreen() {
-    // 增加10秒跑动时间
-    gridGameState.runningTime += 10;
-    gridGameState.isObserving = true;
-    
-    // 更新时间显示
-    updateGridTimeDisplay();
-    
-    // 更新画作数量显示
-document.getElementById('max-painting-number').textContent = gridGameState.paintings.length;
-    
-    // 生成观察界面
-    generateGridObservationGrid();
-    
-    // 显示观察界面
-    showScreen('grid-observation-screen');
-}
-
-// 生成格子画观察界面
-function generateGridObservationGrid() {
-    // 重置当前画作索引
-    currentPaintingIndex = 0;
-    
-    // 显示第一个画作
-    showCurrentPainting();
-}
-
 // 显示当前画作
 function showCurrentPainting() {
     if (!gridGameState.paintings || gridGameState.paintings.length === 0) {
@@ -1941,38 +1727,6 @@ function gridNextPainting() {
     showCurrentPainting();
 }
 
-// 显示格子画答题界面
-function showGridPracticeScreen() {
-    // 增加10秒跑动时间
-    gridGameState.runningTime += 10;
-    gridGameState.isObserving = false;
-    
-    // 更新时间显示
-    updateGridTimeDisplay();
-    
-    // 显示答题界面
-    showScreen('grid-practice-screen');
-}
-
-// 显示格子画当前画作
-function showCurrentPainting() {
-    if (!gridGameState.paintings || gridGameState.paintings.length === 0) {
-        console.error('paintings数组未初始化或为空');
-        return;
-    }
-    
-    if (currentPaintingIndex < 0 || currentPaintingIndex >= gridGameState.paintings.length) {
-        console.error('currentPaintingIndex超出有效范围:', currentPaintingIndex);
-        currentPaintingIndex = 0;
-    }
-    
-    document.getElementById('painting-counter').textContent = `画作 ${currentPaintingIndex + 1}/${gridGameState.paintings.length}`;
-    
-    // 绘制当前画作
-    const canvas = document.getElementById('single-grid-observation-board');
-    drawGridObservationBoard(canvas, gridGameState.paintings[currentPaintingIndex]);
-}
-
 // 生成格子画观察界面
 function generateGridObservationGrid() {
     // 重置当前画作索引
@@ -2001,67 +1755,6 @@ document.getElementById('max-painting-number').textContent = gridGameState.paint
     showScreen('grid-observation-screen');
 }
 
-// 显示格子画结果画作
-function showGridResultPainting() {
-    document.getElementById('grid-result-painting-counter').textContent = `画作 ${gridResultPaintingIndex + 1}/${gridGameState.paintings.length}`;
-    
-    const canvas = document.getElementById('grid-result-observation-board');
-    drawGridResultBoard(canvas, gridGameState.paintings[gridResultPaintingIndex]);
-}
-
-// 格子画结果上一幅画
-function gridResultPrevPainting() {
-    if (gridResultPaintingIndex === 0) {
-        gridResultPaintingIndex = gridGameState.paintingCount - 1;
-    } else {
-        gridResultPaintingIndex--;
-    }
-    showGridResultPainting();
-}
-
-// 格子画结果下一幅画
-function gridResultNextPainting() {
-    if (gridResultPaintingIndex === gridGameState.paintingCount - 1) {
-        gridResultPaintingIndex = 0;
-    } else {
-        gridResultPaintingIndex++;
-    }
-    showGridResultPainting();
-}
-
-// 格子画提交全部答案
-function gridSubmitAllAnswers() {
-    const userAnswer = saveGridCurrentAnswer();
-    
-    if (userAnswer === null) {
-        document.getElementById('grid-feedback').textContent = '请先输入当前题目的答案';
-        document.getElementById('grid-feedback').className = 'feedback wrong';
-        return;
-    }
-    
-    const unansweredQuestions = gridGameState.questions.filter((_, index) => {
-        const answer = gridGameState.answers.find(a => a.questionIndex === index);
-        return !answer || answer.userAnswer === null;
-    });
-    
-    if (unansweredQuestions.length > 0) {
-        document.getElementById('grid-feedback').textContent = `还有${unansweredQuestions.length}道题未作答`;
-        document.getElementById('grid-feedback').className = 'feedback wrong';
-        return;
-    }
-    
-    document.getElementById('grid-feedback').textContent = '✓ 答案已提交，正在计算结果...';
-    document.getElementById('grid-feedback').className = 'feedback correct';
-    
-    showGridQuestion();
-    
-    gridGameState.endTime = Date.now();
-    
-    setTimeout(() => {
-        showGridResults();
-    }, 1000);
-}
-
 // 格子画退出训练
 function gridExitTraining() {
     if (confirm('确定要退出训练吗？未完成的题目将不会保存。')) {
@@ -2080,43 +1773,6 @@ function startGridTimer() {
     window.gridTimer = setInterval(function() {
         updateGridTimeDisplay();
     }, 1000);
-}
-
-// 更新格子画时间显示
-function updateGridTimeDisplay() {
-    const elapsedTime = Math.floor((Date.now() - gridGameState.startTime) / 1000) + gridGameState.runningTime;
-    document.getElementById('grid-game-time').textContent = elapsedTime;
-    document.getElementById('grid-obs-time').textContent = elapsedTime;
-    
-    document.getElementById('grid-running-time').textContent = gridGameState.runningTime + '秒';
-    document.getElementById('grid-obs-running-time').textContent = gridGameState.runningTime + '秒';
-}
-
-// 显示格子画结果
-function showGridResults() {
-    if (window.gridTimer) {
-        clearInterval(window.gridTimer);
-    }
-    
-    const totalTime = Math.floor((gridGameState.endTime - gridGameState.startTime) / 1000) + gridGameState.runningTime;
-    const correctAnswers = gridGameState.answers.filter(answer => answer.isCorrect).length;
-    const accuracy = Math.round((correctAnswers / gridGameState.answers.length) * 100);
-    
-    document.getElementById('grid-total-time').textContent = totalTime;
-    document.getElementById('grid-final-running-time').textContent = gridGameState.runningTime;
-    document.getElementById('grid-final-seed').textContent = gridGameState.seed;
-    
-    // 生成分享链接
-    generateGridShareLink(totalTime, gridGameState.runningTime, gridGameState.seed);
-    
-    // 生成详细结果
-    generateGridResultsList();
-    
-    // 初始化结果界面画作显示
-    gridResultPaintingIndex = 0;
-    showGridResultPainting();
-    
-    showScreen('grid-result-screen');
 }
 
 // 格子画结果上一幅画
@@ -2149,8 +1805,6 @@ function showGridResultPainting() {
         // 动态设置canvas尺寸，使画布大小与观察区域大小成比例
         // 画布大小 = 画作画布尺寸 / 画作尺寸 * 观察区域大小
         const paintingCanvasSize = gridGameState.canvasSize || 20;
-        const actualRegionSize = painting.questionRegion ? painting.questionRegion.regionWidth : 
-                              (gridGameState.observationRegionSize || getObservationRegionSize());
         const desiredCanvasSize = painting.originCellSize * paintingCanvasSize
         if (canvas.width !== desiredCanvasSize || canvas.height !== desiredCanvasSize) {
             canvas.width = desiredCanvasSize;
@@ -2159,47 +1813,6 @@ function showGridResultPainting() {
     }
     
     drawGridResultBoard(canvas, painting);
-}
-
-// 绘制格子画结果画布（蒙德里安风格，不显示格线）
-function drawGridResultBoard(canvas, painting) {
-    const ctx = canvas.getContext('2d');
-    // 直接使用原画作存储的CellSize值，确保完全一致
-    const cellSize = painting.originCellSize || 10; // 使用存储的CellSize值，如果不存在则使用默认值
-    
-    // 使用gridGameState中的canvasSize变量
-    const canvasSize = gridGameState.canvasSize || 20;
-    
-    // 根据CellSize和画布大小确定画布尺寸
-    // 画布大小 = CellSize × 画布格子数
-    const desiredCanvasSize = cellSize * canvasSize;
-    if (canvas.width !== desiredCanvasSize || canvas.height !== desiredCanvasSize) {
-        canvas.width = desiredCanvasSize;
-        canvas.height = desiredCanvasSize;
-    }
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // 绘制蒙德里安格子画（不显示网格线）
-    for (let i = 0; i < canvasSize; i++) {
-        for (let j = 0; j < canvasSize; j++) {
-            ctx.fillStyle = '#f8f8f8';
-            ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
-            
-            // 不绘制网格线，保持蒙德里安风格的简洁性
-        }
-    }
-    
-    // 标记正确答案区域（绿色边框）
-    const answerQuestions = gridGameState.questions.filter(q => q.paintingIndex === gridResultPaintingIndex);
-    if (answerQuestions.length > 0) {
-        ctx.strokeStyle = '#28a745';
-        ctx.lineWidth = 3;
-        
-        answerQuestions.forEach(question => {
-            // 这里稍后实现具体的区域标记逻辑
-        });
-    }
 }
 
 // 生成格子画分享链接
@@ -2313,82 +1926,9 @@ function generateGridResultsList() {
     });
 }
 
-// 更新格子画导航按钮状态
-function updateGridNavigationButtons() {
-    // 暂时不实现特殊逻辑，保持按钮可用状态
-}
-
-// 绘制格子画结果画布
-function drawGridResultBoard(canvas, painting) {
-    const ctx = canvas.getContext('2d');
-    
-    // 直接使用原画作存储的CellSize值，确保完全一致
-    const cellSize = painting.originCellSize || 10; // 使用存储的CellSize值，如果不存在则使用默认值
-    
-    // 使用gridGameState中的canvasSize变量
-    const canvasSize = gridGameState.canvasSize || 20;
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // 绘制蒙德里安格子画
-    for (let i = 0; i < canvasSize; i++) {
-        for (let j = 0; j < canvasSize; j++) {
-            const color = painting.data[i][j] || '#FFFFFF';
-            ctx.fillStyle = color;
-            ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
-        }
-    }
-    
-    // 标记正确答案区域（绿色边框）
-    const answerQuestions = gridGameState.questions.filter(q => q.paintingIndex === gridResultPaintingIndex);
-    if (answerQuestions.length > 0) {
-        ctx.strokeStyle = '#28a745';
-        ctx.lineWidth = 3;
-        
-        answerQuestions.forEach(question => {
-            const startRow = question.startRow;
-            const startCol = question.startCol;
-            const regionSize = gridGameState.observationRegionSize;
-            
-            ctx.strokeRect(
-                startCol * cellSize,
-                startRow * cellSize,
-                regionSize * cellSize,
-                regionSize * cellSize
-            );
-        });
-    }
-}
-
-// 复制格子画分享链接
-function gridCopyShareLink() {
-    const shareLinkInput = document.getElementById('grid-share-link');
-    const shareMessage = document.getElementById('grid-share-message');
-    
-    shareLinkInput.select();
-    shareLinkInput.setSelectionRange(0, 99999);
-    
-    try {
-        // 复制包含文字提示的完整内容，模仿宝石迷阵的格式
-        const textToCopy = `${shareMessage.textContent}\n${shareLinkInput.value}`;
-        navigator.clipboard.writeText(textToCopy);
-        alert('分享内容已复制到剪贴板！');
-    } catch (err) {
-        console.error('复制失败:', err);
-        alert('复制失败，请手动复制链接');
-    }
-}
-
 // 格子画重新开始训练
 function gridRestartTraining() {
     showScreen('grid-setup-screen');
-}
-
-// 格子画退出训练
-function gridExitTraining() {
-    if (confirm('确定要退出训练吗？未完成的题目将不会保存。')) {
-        showScreen('main-menu');
-    }
 }
 
 // 格子画重新开始结果界面
@@ -2401,37 +1941,6 @@ function gridReturnToMainMenu() {
     showScreen('main-menu');
 }
 
-// 格子画计时器
-function startGridTimer() {
-    if (window.gridTimer) {
-        clearInterval(window.gridTimer);
-    }
-    
-    updateGridTimeDisplay();
-    
-    window.gridTimer = setInterval(function() {
-        updateGridTimeDisplay();
-    }, 1000);
-}
-
-// 更新格子画时间显示
-function updateGridTimeDisplay() {
-    if (!gridGameState.startTime) return;
-    
-    const elapsedTime = Math.floor((Date.now() - gridGameState.startTime) / 1000) + gridGameState.runningTime;
-    
-    const gameTimeElement = document.getElementById('grid-game-time');
-    const obsTimeElement = document.getElementById('grid-obs-time');
-    
-    if (gameTimeElement) gameTimeElement.textContent = elapsedTime;
-    if (obsTimeElement) obsTimeElement.textContent = elapsedTime;
-    
-    const runningTimeElement = document.getElementById('grid-running-time');
-    const obsRunningTimeElement = document.getElementById('grid-obs-running-time');
-    
-    if (runningTimeElement) runningTimeElement.textContent = gridGameState.runningTime + '秒';
-    if (obsRunningTimeElement) obsRunningTimeElement.textContent = gridGameState.runningTime + '秒';
-}
 // 复制格子画分享链接
 function gridCopyShareLink() {
     const shareLinkInput = document.getElementById('grid-share-link');
@@ -2548,34 +2057,6 @@ function showGridResults() {
     showScreen('grid-result-screen');
 }
 
-
-
-// 开始格子画计时器
-function startGridTimer() {
-    if (window.gridTimer) {
-        clearInterval(window.gridTimer);
-    }
-    
-    updateGridTimeDisplay();
-    
-    window.gridTimer = setInterval(function() {
-        updateGridTimeDisplay();
-    }, 1000);
-}
-
-// 开始格子画计时器
-function startGridTimer() {
-    if (window.gridTimer) {
-        clearInterval(window.gridTimer);
-    }
-    
-    updateGridTimeDisplay();
-    
-    window.gridTimer = setInterval(function() {
-        updateGridTimeDisplay();
-    }, 1000);
-}
-
 // 更新格子画时间显示
 function updateGridTimeDisplay() {
     if (!gridGameState.startTime) return;
@@ -2593,32 +2074,6 @@ function updateGridTimeDisplay() {
     
     if (runningTimeElement) runningTimeElement.textContent = gridGameState.runningTime + '秒';
     if (obsRunningTimeElement) obsRunningTimeElement.textContent = gridGameState.runningTime + '秒';
-}
-
-
-
-
-
-// 设置随机数种
-function setRandomSeed(seed) {
-    let actualSeed = seed;
-    
-    if (seed && seed >= 1 && seed <= 999999) {
-        Math.seed = seed;
-        Math.random = function() {
-            Math.seed = (Math.seed * 9301 + 49297) % 233280;
-            return Math.seed / 233280;
-        };
-    } else {
-        actualSeed = Math.floor(Math.random() * 999999) + 1;
-        Math.seed = actualSeed;
-        Math.random = function() {
-            Math.seed = (Math.seed * 9301 + 49297) % 233280;
-            return Math.seed / 233280;
-        };
-    }
-    
-    return actualSeed;
 }
 
 // 从URL参数加载配置
