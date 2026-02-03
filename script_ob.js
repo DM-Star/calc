@@ -1949,41 +1949,20 @@ function gridCopyShareLink() {
     shareLinkInput.select();
     shareLinkInput.setSelectionRange(0, 99999);
     
-    try {
-        // 复制包含文字提示的完整内容，模仿宝石迷阵的格式
-        const textToCopy = `${shareMessage.textContent}\n${shareLinkInput.value}`;
-        
-        // 确保文档获得焦点
-        if (!document.hasFocus()) {
-            // 如果文档没有焦点，使用备用方案
-            const textArea = document.createElement('textarea');
-            textArea.value = textToCopy;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-        } else {
-            // 文档有焦点，使用现代剪贴板API
-            navigator.clipboard.writeText(textToCopy);
-        }
-        
+    // 复制到剪贴板
+    const textToCopy = `${shareMessage.textContent}\n${shareLinkInput.value}`;
+    navigator.clipboard.writeText(textToCopy).then(() => {
         alert('分享内容已复制到剪贴板！');
-    } catch (err) {
-        console.error('复制失败:', err);
-        // 备用方案：使用传统的execCommand方法
-        try {
-            const textArea = document.createElement('textarea');
-            textArea.value = `${shareMessage.textContent}\n${shareLinkInput.value}`;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            alert('分享内容已复制到剪贴板！');
-        } catch (fallbackErr) {
-            console.error('备用复制方案也失败:', fallbackErr);
-            alert('复制失败，请手动复制链接');
-        }
-    }
+    }).catch(() => {
+        // 备用方案
+        const textArea = document.createElement('textarea');
+        textArea.value = textToCopy;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('分享内容已复制到剪贴板！');
+    });
 }
 
 // 格子画全局变量
