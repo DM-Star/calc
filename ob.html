@@ -65,7 +65,7 @@
                     <button class="control-btn primary-btn" onclick="startTraining()">
                         开始训练
                     </button>
-                    <button class="control-btn secondary-btn" onclick="showScreen('main-menu')">
+                    <button class="control-btn secondary-btn" onclick="ReturnToMainMenu()">
                         返回主菜单
                     </button>
                 </div>
@@ -111,7 +111,7 @@
                     <button class="control-btn primary-btn" onclick="startGridTraining()">
                         开始训练
                     </button>
-                    <button class="control-btn secondary-btn" onclick="showScreen('main-menu')">
+                    <button class="control-btn secondary-btn" onclick="ReturnToMainMenu()">
                         返回主菜单
                     </button>
                 </div>
@@ -287,7 +287,7 @@
                 </div>
                 
                 <div class="board-display">
-                    <canvas id="single-observation-board" class="single-board-canvas" width="450" height="450"></canvas>
+                    <canvas id="single-observation-board" class="single-board-canvas" width="300" height="300"></canvas>
                 </div>
             </div>
             
@@ -378,7 +378,7 @@
                 </div>
                 
                 <div class="board-display">
-<canvas id="result-observation-board" class="single-board-canvas" width="450" height="450"></canvas>
+<canvas id="result-observation-board" class="single-board-canvas" width="300" height="300"></canvas>
                 </div>
                 
                 <div class="answer-highlight">
@@ -402,10 +402,10 @@
             
             <!-- 控制按钮 -->
             <div class="control-buttons">
-                <button class="control-btn primary-btn" onclick="showScreen('main-menu')">
+                <button class="control-btn primary-btn" onclick="ReturnToMainMenu()">
                     返回主菜单
                 </button>
-                <button class="control-btn secondary-btn" onclick="showScreen('setup-screen')">
+                <button class="control-btn secondary-btn" onclick="restartTraining()">
                     重新开始
                 </button>
             </div>
@@ -468,10 +468,10 @@
             
             <!-- 控制按钮 -->
             <div class="control-buttons">
-                <button class="control-btn primary-btn" onclick="showScreen('main-menu')">
+                <button class="control-btn primary-btn" onclick="ReturnToMainMenu()">
                     返回主菜单
                 </button>
-                <button class="control-btn secondary-btn" onclick="showScreen('grid-setup-screen')">
+                <button class="control-btn secondary-btn" onclick="gridRestartTraining()">
                     重新开始
                 </button>
             </div>

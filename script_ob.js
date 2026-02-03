@@ -920,14 +920,31 @@ function copyShareLink() {
 
 // 重新开始训练
 function restartTraining() {
+    clearURLSeedParameter();
+    
     showScreen('setup-screen');
+    console.log('重新开始宝石迷阵训练：所有随机数种已完全清空，包括URL参数');
 }
 
 // 退出训练
 function exitTraining() {
     if (confirm('确定要退出训练吗？未完成的题目将不会保存。')) {
-        showScreen('main-menu');
+        ReturnToMainMenu();
     }
+}
+
+function ReturnToMainMenu() {
+    const url = new URL(window.location);
+    const urlParams = new URLSearchParams(url.search);
+    if (urlParams.has('type')) {
+        urlParams.delete('type');
+    }
+    if (urlParams.has('seed')) {
+        urlParams.delete('seed');
+    }
+    url.search = urlParams.toString();
+    window.history.replaceState({}, '', url);
+    showScreen('main-menu');
 }
 
 // ==================== 格子画功能 ====================
@@ -1247,25 +1264,18 @@ function drawGridResultBoard(canvas, painting) {
         }
     }
     
-    // 标记正确答案区域（绿色边框）
-    const answerQuestions = gridGameState.questions.filter(q => q.paintingIndex === gridResultPaintingIndex);
-    if (answerQuestions.length > 0) {
-        ctx.strokeStyle = '#28a745';
-        ctx.lineWidth = 3;
-        
-        answerQuestions.forEach(question => {
-            const startRow = question.startRow;
-            const startCol = question.startCol;
-            const regionSize = question.regionWidth || getObservationRegionSize();
-            
-            ctx.strokeRect(
-                startCol * cellSize,
-                startRow * cellSize,
-                regionSize * cellSize,
-                regionSize * cellSize
-            );
-        });
-    }
+    const startRow = painting.questionRegion.startRow;
+    const startCol = painting.questionRegion.startCol;
+    const regionWidth = painting.questionRegion.regionWidth;
+    const regionHeight = painting.questionRegion.regionHeight;
+    ctx.strokeStyle = '#28a745';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(
+        startCol * cellSize,
+        startRow * cellSize,
+        regionWidth * cellSize,
+        regionHeight * cellSize
+    );
 }
 
 // 生成格子画问题
@@ -1758,7 +1768,7 @@ document.getElementById('max-painting-number').textContent = gridGameState.paint
 // 格子画退出训练
 function gridExitTraining() {
     if (confirm('确定要退出训练吗？未完成的题目将不会保存。')) {
-        showScreen('main-menu');
+        ReturnToMainMenu();
     }
 }
 
@@ -1926,19 +1936,88 @@ function generateGridResultsList() {
     });
 }
 
-// 格子画重新开始训练
-function gridRestartTraining() {
-    showScreen('grid-setup-screen');
+// 清空URL参数中的随机数种
+function clearURLSeedParameter() {
+    const seedInputs = [
+        'random-seed',
+        'grid-random-seed'
+    ];
+    
+    const seedDisplayElements = [
+        'seed-value',
+        'grid-seed-value'
+    ];
+    
+    // 清空所有输入框
+    seedInputs.forEach(inputId => {
+        const inputElement = document.getElementById(inputId);
+        if (inputElement) {
+            inputElement.value = '';
+        }
+    });
+    
+    // 清空所有显示文本框
+    seedDisplayElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = '随机生成';
+        }
+    });
+
+    const url = new URL(window.location);
+    const urlParams = new URLSearchParams(url.search);
+    
+    // 清除旧的seed参数
+    if (urlParams.has('seed')) {
+        urlParams.delete('seed');
+    }
+    
+    // 清除新的配置参数中的seed
+    const configParam = urlParams.get('c');
+    if (configParam) {
+        try {
+            const decodedConfig = atob(configParam);
+            const config = JSON.parse(decodedConfig);
+            
+            // 移除配置中的seed相关字段
+            delete config.s;
+            delete config.seed;
+            
+            // 如果配置中还有其他字段，更新URL参数
+            if (Object.keys(config).length > 0) {
+                const newConfigString = JSON.stringify(config);
+                const newEncodedConfig = btoa(newConfigString);
+                urlParams.set('c', newEncodedConfig);
+            } else {
+                // 如果配置为空，删除整个c参数
+                urlParams.delete('c');
+            }
+            
+            url.search = urlParams.toString();
+            window.history.replaceState({}, '', url);
+        } catch (error) {
+            console.warn('清除URL参数失败:', error);
+        }
+    } else if (urlParams.toString()) {
+        // 如果没有c参数但有其他参数，直接更新URL
+        url.search = urlParams.toString();
+        window.history.replaceState({}, '', url);
+    } else {
+        // 如果没有参数，清除所有参数
+        window.history.replaceState({}, '', window.location.pathname);
+    }
 }
 
-// 格子画重新开始结果界面
-function gridRestartFromResults() {
+// 格子画重新开始训练
+function gridRestartTraining() {
+    // 清除URL参数中的随机数种
+    clearURLSeedParameter();
     showScreen('grid-setup-screen');
 }
 
 // 格子画返回主菜单
 function gridReturnToMainMenu() {
-    showScreen('main-menu');
+    ReturnToMainMenu();
 }
 
 // 复制格子画分享链接
