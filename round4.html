@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字华容道 - 双面 6x6</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1400px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .shuffle-input {
+            width: 80px;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .shuffle-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .moves {
+            font-size: 18px;
+            color: #333;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .game-board {
+            display: inline-block;
+            position: relative;
+        }
+
+        .boards-container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .board-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .board-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: auto repeat(6, 1fr) auto;
+            grid-template-rows: auto repeat(6, 1fr) auto;
+            gap: 8px;
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .arrow {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .arrow:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        .arrow:active {
+            transform: scale(0.95);
+        }
+
+        .arrow.top {
+            grid-row: 1;
+        }
+
+        .arrow.bottom {
+            grid-row: 8;
+        }
+
+        .arrow.left {
+            grid-column: 1;
+        }
+
+        .arrow.right {
+            grid-column: 8;
+        }
+
+        .cell {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .cell.correct {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .corner {
+            width: 50px;
+            height: 50px;
+        }
+
+        .success-message {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 24px;
+            color: #11998e;
+            font-weight: bold;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 数字华容道 - 双面版</h1>
+        <div class="subtitle">正面与背面连通，总共72个数字（正面1-36，背面37-72）</div>
+
+        <div class="controls">
+            <div class="control-group">
+                <button class="btn" onclick="game.randomShuffle()">🎲 随机打乱</button>
+            </div>
+
+            <div class="control-group">
+                <input type="number" id="shuffleSteps" class="shuffle-input" value="50" min="1" max="500">
+                <button class="btn" onclick="game.customShuffle()">🔀 打乱N步</button>
+            </div>
+
+            <div class="moves">移动步数: <span id="moveCount">0</span></div>
+        </div>
+
+        <div class="boards-container">
+            <div class="board-section">
+                <div class="board-title">📄 正面 (1-36) - 可操作</div>
+                <div class="grid-container" id="frontBoard"></div>
+            </div>
+
+            <div class="board-section">
+                <div class="board-title">📄 背面 (37-72) - 展示</div>
+                <div class="grid-container" id="backBoard"></div>
+            </div>
+        </div>
+
+        <div class="success-message" id="successMessage">
+            🎉 恭喜你，挑战成功！🎉
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">当前步数</div>
+                <div class="stat-value" id="currentMoves">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">最少步数</div>
+                <div class="stat-value" id="bestMoves">-</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class NumberPuzzle {
+            constructor() {
+                this.size = 6;
+                this.frontBoard = [];
+                this.backBoard = [];
+                this.moves = 0;
+                this.bestMoves = localStorage.getItem('bestMoves') || null;
+                this.init();
+            }
+
+            init() {
+                this.createBoards();
+                this.customShuffle(); // 默认使用自定义步数打乱
+                this.updateBestMoves();
+            }
+
+            createBoards() {
+                this.createBoard('frontBoard', true);
+                this.createBoard('backBoard', false);
+            }
+
+            createBoard(boardId, withArrows) {
+                const gameBoard = document.getElementById(boardId);
+                gameBoard.innerHTML = '';
+
+                // 左上角空位
+                const cornerTL = document.createElement('div');
+                cornerTL.className = 'corner';
+                cornerTL.style.gridRow = '1';
+                cornerTL.style.gridColumn = '1';
+                gameBoard.appendChild(cornerTL);
+
+                // 顶部箭头
+                if (withArrows) {
+                    for (let col = 0; col < this.size; col++) {
+                        const arrow = this.createArrow('↑', 'top', col);
+                        arrow.style.gridColumn = col + 2;
+                        gameBoard.appendChild(arrow);
+                    }
+                } else {
+                    for (let col = 0; col < this.size; col++) {
+                        const empty = document.createElement('div');
+                        empty.className = 'corner';
+                        empty.style.gridRow = '1';
+                        empty.style.gridColumn = col + 2;
+                        gameBoard.appendChild(empty);
+                    }
+                }
+
+                // 右上角空位
+                const cornerTR = document.createElement('div');
+                cornerTR.className = 'corner';
+                cornerTR.style.gridRow = '1';
+                cornerTR.style.gridColumn = '8';
+                gameBoard.appendChild(cornerTR);
+
+                // 中间行（左箭头/空位 + 格子 + 右箭头/空位）
+                for (let row = 0; row < this.size; row++) {
+                    // 左侧
+                    if (withArrows) {
+                        const leftArrow = this.createArrow('←', 'left', row);
+                        leftArrow.style.gridRow = row + 2;
+                        gameBoard.appendChild(leftArrow);
+                    } else {
+                        const empty = document.createElement('div');
+                        empty.className = 'corner';
+                        empty.style.gridRow = row + 2;
+                        empty.style.gridColumn = '1';
+                        gameBoard.appendChild(empty);
+                    }
+
+                    // 格子
+                    for (let col = 0; col < this.size; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        cell.dataset.board = withArrows ? 'front' : 'back';
+                        cell.style.gridRow = row + 2;
+                        cell.style.gridColumn = col + 2;
+                        gameBoard.appendChild(cell);
+                    }
+
+                    // 右侧
+                    if (withArrows) {
+                        const rightArrow = this.createArrow('→', 'right', row);
+                        rightArrow.style.gridRow = row + 2;
+                        gameBoard.appendChild(rightArrow);
+                    } else {
+                        const empty = document.createElement('div');
+                        empty.className = 'corner';
+                        empty.style.gridRow = row + 2;
+                        empty.style.gridColumn = '8';
+                        gameBoard.appendChild(empty);
+                    }
+                }
+
+                // 左下角空位
+                const cornerBL = document.createElement('div');
+                cornerBL.className = 'corner';
+                cornerBL.style.gridRow = '8';
+                cornerBL.style.gridColumn = '1';
+                gameBoard.appendChild(cornerBL);
+
+                // 底部箭头
+                if (withArrows) {
+                    for (let col = 0; col < this.size; col++) {
+                        const arrow = this.createArrow('↓', 'bottom', col);
+                        arrow.style.gridColumn = col + 2;
+                        gameBoard.appendChild(arrow);
+                    }
+                } else {
+                    for (let col = 0; col < this.size; col++) {
+                        const empty = document.createElement('div');
+                        empty.className = 'corner';
+                        empty.style.gridRow = '8';
+                        empty.style.gridColumn = col + 2;
+                        gameBoard.appendChild(empty);
+                    }
+                }
+
+                // 右下角空位
+                const cornerBR = document.createElement('div');
+                cornerBR.className = 'corner';
+                cornerBR.style.gridRow = '8';
+                cornerBR.style.gridColumn = '8';
+                gameBoard.appendChild(cornerBR);
+            }
+
+            createArrow(symbol, direction, index) {
+                const arrow = document.createElement('button');
+                arrow.className = `arrow ${direction}`;
+                arrow.textContent = symbol;
+                arrow.onclick = () => this.handleArrowClick(direction, index);
+                return arrow;
+            }
+
+            // 随机打乱（完全随机）
+            randomShuffle() {
+                this.moves = 0;
+                this.updateMoveCount();
+                const boards = this.generateRandomBoards();
+                this.frontBoard = boards.front;
+                this.backBoard = boards.back;
+                this.render();
+                document.getElementById('successMessage').classList.remove('show');
+            }
+
+            // 自定义步数打乱（从正确状态开始打乱N步）
+            customShuffle() {
+                const steps = parseInt(document.getElementById('shuffleSteps').value) || 50;
+
+                // 初始化为正确状态
+                this.frontBoard = [];
+                this.backBoard = [];
+
+                for (let row = 0; row < this.size; row++) {
+                    const frontRow = [];
+                    const backRow = [];
+                    for (let col = 0; col < this.size; col++) {
+                        frontRow.push(row * this.size + col + 1);
+                        backRow.push(this.size * this.size + row * this.size + col + 1);
+                    }
+                    this.frontBoard.push(frontRow);
+                    this.backBoard.push(backRow);
+                }
+
+                // 执行随机移动N步
+                for (let i = 0; i < steps; i++) {
+                    const moveType = Math.floor(Math.random() * 4); // 0: row left, 1: row right, 2: col up, 3: col down
+                    const index = Math.floor(Math.random() * this.size);
+
+                    switch(moveType) {
+                        case 0:
+                            this.moveRowLeft(index);
+                            break;
+                        case 1:
+                            this.moveRowRight(index);
+                            break;
+                        case 2:
+                            this.moveColumnUp(index);
+                            break;
+                        case 3:
+                            this.moveColumnDown(index);
+                            break;
+                    }
+                }
+
+                this.moves = 0;
+                this.updateMoveCount();
+                this.render();
+                document.getElementById('successMessage').classList.remove('show');
+            }
+
+            newGame() {
+                this.customShuffle();
+            }
+
+            generateRandomBoards() {
+                // 创建1-72的数组
+                const numbers = Array.from({length: this.size * this.size * 2}, (_, i) => i + 1);
+
+                // Fisher-Yates 洗牌算法
+                for (let i = numbers.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+                }
+
+                // 转换为两个二维数组
+                const front = [];
+                const back = [];
+
+                for (let i = 0; i < this.size; i++) {
+                    front.push(numbers.slice(i * this.size, (i + 1) * this.size));
+                    back.push(numbers.slice((this.size + i) * this.size, (this.size + i + 1) * this.size));
+                }
+
+                return { front, back };
+            }
+
+            handleArrowClick(direction, index) {
+                switch(direction) {
+                    case 'top':
+                        this.moveColumnUp(index);
+                        break;
+                    case 'bottom':
+                        this.moveColumnDown(index);
+                        break;
+                    case 'left':
+                        this.moveRowLeft(index);
+                        break;
+                    case 'right':
+                        this.moveRowRight(index);
+                        break;
+                }
+
+                this.moves++;
+                this.updateMoveCount();
+                this.render();
+                this.checkWin();
+            }
+
+            // 向左移动行（正面和背面连通）
+            moveRowLeft(row) {
+                // 创建循环数组：正面row[0-5] -> 背面row[0-5]
+                const cycle = [];
+                for (let col = 0; col < this.size; col++) {
+                    cycle.push(this.frontBoard[row][col]);
+                }
+                for (let col = 0; col < this.size; col++) {
+                    cycle.push(this.backBoard[row][col]);
+                }
+
+                // 向左移动（循环）
+                const first = cycle[0];
+                for (let i = 0; i < cycle.length - 1; i++) {
+                    cycle[i] = cycle[i + 1];
+                }
+                cycle[cycle.length - 1] = first;
+
+                // 写回
+                for (let col = 0; col < this.size; col++) {
+                    this.frontBoard[row][col] = cycle[col];
+                }
+                for (let col = 0; col < this.size; col++) {
+                    this.backBoard[row][col] = cycle[this.size + col];
+                }
+            }
+
+            // 向右移动行（正面和背面连通）
+            moveRowRight(row) {
+                // 创建循环数组
+                const cycle = [];
+                for (let col = 0; col < this.size; col++) {
+                    cycle.push(this.frontBoard[row][col]);
+                }
+                for (let col = 0; col < this.size; col++) {
+                    cycle.push(this.backBoard[row][col]);
+                }
+
+                // 向右移动（循环）
+                const last = cycle[cycle.length - 1];
+                for (let i = cycle.length - 1; i > 0; i--) {
+                    cycle[i] = cycle[i - 1];
+                }
+                cycle[0] = last;
+
+                // 写回
+                for (let col = 0; col < this.size; col++) {
+                    this.frontBoard[row][col] = cycle[col];
+                }
+                for (let col = 0; col < this.size; col++) {
+                    this.backBoard[row][col] = cycle[this.size + col];
+                }
+            }
+
+            // 向上移动列（正面和背面连通，背面反向）
+            moveColumnUp(col) {
+                // 创建循环数组：正面col[0-5] -> 背面col[5-0]（反向）
+                const cycle = [];
+                for (let row = 0; row < this.size; row++) {
+                    cycle.push(this.frontBoard[row][col]);
+                }
+                for (let row = this.size - 1; row >= 0; row--) {
+                    cycle.push(this.backBoard[row][col]);
+                }
+
+                // 向上移动（循环）
+                const first = cycle[0];
+                for (let i = 0; i < cycle.length - 1; i++) {
+                    cycle[i] = cycle[i + 1];
+                }
+                cycle[cycle.length - 1] = first;
+
+                // 写回
+                for (let row = 0; row < this.size; row++) {
+                    this.frontBoard[row][col] = cycle[row];
+                }
+                for (let row = this.size - 1; row >= 0; row--) {
+                    this.backBoard[row][col] = cycle[this.size + (this.size - 1 - row)];
+                }
+            }
+
+            // 向下移动列（正面和背面连通，背面反向）
+            moveColumnDown(col) {
+                // 创建循环数组：正面col[0-5] -> 背面col[5-0]（反向）
+                const cycle = [];
+                for (let row = 0; row < this.size; row++) {
+                    cycle.push(this.frontBoard[row][col]);
+                }
+                for (let row = this.size - 1; row >= 0; row--) {
+                    cycle.push(this.backBoard[row][col]);
+                }
+
+                // 向下移动（循环）
+                const last = cycle[cycle.length - 1];
+                for (let i = cycle.length - 1; i > 0; i--) {
+                    cycle[i] = cycle[i - 1];
+                }
+                cycle[0] = last;
+
+                // 写回
+                for (let row = 0; row < this.size; row++) {
+                    this.frontBoard[row][col] = cycle[row];
+                }
+                for (let row = this.size - 1; row >= 0; row--) {
+                    this.backBoard[row][col] = cycle[this.size + (this.size - 1 - row)];
+                }
+            }
+
+            render() {
+                // 渲染正面
+                for (let row = 0; row < this.size; row++) {
+                    for (let col = 0; col < this.size; col++) {
+                        const cell = document.querySelector(`[data-board="front"][data-row="${row}"][data-col="${col}"]`);
+                        const value = this.frontBoard[row][col];
+                        const correctValue = row * this.size + col + 1;
+
+                        cell.textContent = value;
+
+                        if (value === correctValue) {
+                            cell.classList.add('correct');
+                        } else {
+                            cell.classList.remove('correct');
+                        }
+                    }
+                }
+
+                // 渲染背面
+                for (let row = 0; row < this.size; row++) {
+                    for (let col = 0; col < this.size; col++) {
+                        const cell = document.querySelector(`[data-board="back"][data-row="${row}"][data-col="${col}"]`);
+                        const value = this.backBoard[row][col];
+                        const correctValue = this.size * this.size + row * this.size + col + 1;
+
+                        cell.textContent = value;
+
+                        if (value === correctValue) {
+                            cell.classList.add('correct');
+                        } else {
+                            cell.classList.remove('correct');
+                        }
+                    }
+                }
+            }
+
+            checkWin() {
+                // 检查正面
+                for (let row = 0; row < this.size; row++) {
+                    for (let col = 0; col < this.size; col++) {
+                        const correctValue = row * this.size + col + 1;
+                        if (this.frontBoard[row][col] !== correctValue) {
+                            return false;
+                        }
+                    }
+                }
+
+                // 检查背面
+                for (let row = 0; row < this.size; row++) {
+                    for (let col = 0; col < this.size; col++) {
+                        const correctValue = this.size * this.size + row * this.size + col + 1;
+                        if (this.backBoard[row][col] !== correctValue) {
+                            return false;
+                        }
+                    }
+                }
+
+                // 胜利
+                document.getElementById('successMessage').classList.add('show');
+
+                // 更新最佳成绩
+                if (!this.bestMoves || this.moves < this.bestMoves) {
+                    this.bestMoves = this.moves;
+                    localStorage.setItem('bestMoves', this.bestMoves);
+                    this.updateBestMoves();
+                }
+
+                return true;
+            }
+
+            updateMoveCount() {
+                document.getElementById('moveCount').textContent = this.moves;
+                document.getElementById('currentMoves').textContent = this.moves;
+            }
+
+            updateBestMoves() {
+                const bestMovesEl = document.getElementById('bestMoves');
+                bestMovesEl.textContent = this.bestMoves || '-';
+            }
+        }
+
+        // 启动游戏
+        const game = new NumberPuzzle();
+    </script>
+</body>
+</html>
