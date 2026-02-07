@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hex game</title>
+  <style>
+    :root {
+      --bg: #11151c;
+      --stroke: #dfe6ee;
+      --red: #e45757;
+      --green: #7dd56f;
+      --blue: #6e86f7;
+      --selected: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: #f4f7fb;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    .wrap {
+      width: min(1100px, 96vw);
+      padding: 18px;
+    }
+    .title {
+      font-size: 18px;
+      margin: 0;
+      opacity: 0.9;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 200px;
+      gap: 18px;
+      align-items: start;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #0c1016;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    .hex {
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease, stroke 120ms ease;
+    }
+    .hex:hover {
+      filter: brightness(1.08);
+    }
+    .hex-shape.selected {
+      stroke: var(--selected);
+      stroke-width: 4;
+      filter: drop-shadow(0 0 6px rgba(255,255,255,0.35));
+    }
+    .label {
+      font-weight: 700;
+      font-size: 16px;
+      fill: #0f1320;
+      pointer-events: none;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+    .legend {
+      display: flex;
+      gap: 12px;
+      opacity: 0.9;
+      font-size: 14px;
+      align-items: center;
+    }
+    .controls {
+      display: grid;
+      gap: 12px;
+      align-items: start;
+    }
+    .panel {
+      background: #0c1016;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      border: 1px solid rgba(223, 230, 238, 0.08);
+    }
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(223, 230, 238, 0.25);
+      background: linear-gradient(180deg, #1a2230, #121824);
+      color: #e7edf7;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, opacity 120ms ease;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(223, 230, 238, 0.45);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="layout">
+      <div>
+        <div class="title" style="margin-bottom: 12px;">点击六边形可选中/取消选中</div>
+        <svg id="board" viewBox="0 0 980 640" aria-label="hex board"></svg>
+        <div class="legend" style="margin-top: 12px;">
+          <span><i class="dot" style="background: var(--red)"></i>红色</span>
+          <span><i class="dot" style="background: var(--green)"></i>绿色</span>
+          <span><i class="dot" style="background: var(--blue)"></i>蓝色</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="legend" style="margin-bottom: 12px; justify-content: space-between;">
+          <span>回合：<strong id="turnCount">1</strong></span>
+          <span>当前玩家：<strong id="turnPlayer">A</strong></span>
+        </div>
+        <div class="controls">
+          <button class="btn" id="confirmBtn">确定起点</button>
+          <button class="btn" id="moveBtn">移动</button>
+          <button class="btn" id="skipBtn">跳过回合</button>
+          <button class="btn" id="undoBtn">撤销</button>
+          <button class="btn" id="resetBtn">重置</button>
+          <button class="btn" id="rotateBtn">旋转</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const svg = document.getElementById("board");
+    const confirmBtn = document.getElementById("confirmBtn");
+    const rotateBtn = document.getElementById("rotateBtn");
+    const moveBtn = document.getElementById("moveBtn");
+    const skipBtn = document.getElementById("skipBtn");
+    const undoBtn = document.getElementById("undoBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const turnCountEl = document.getElementById("turnCount");
+    const turnPlayerEl = document.getElementById("turnPlayer");
+
+    const size = 36; // 半径
+    const width = 2 * size; // 平顶六边形宽
+    const height = Math.sqrt(3) * size; // 高
+    const gap = 5; // 间隙像素
+    const horiz = 0.75 * width + gap; // 横向间距
+    const vert = height + gap; // 纵向间距
+
+    const colors = {
+      r: getComputedStyle(document.documentElement).getPropertyValue("--red").trim(),
+      g: getComputedStyle(document.documentElement).getPropertyValue("--green").trim(),
+      b: getComputedStyle(document.documentElement).getPropertyValue("--blue").trim(),
+    };
+
+    function lightenColor(hex, amount = 0.35) {
+      const normalized = hex.replace("#", "");
+      const num = parseInt(normalized, 16);
+      const r = (num >> 16) & 0xff;
+      const g = (num >> 8) & 0xff;
+      const b = num & 0xff;
+      const lr = Math.min(255, Math.round(r + (255 - r) * amount));
+      const lg = Math.min(255, Math.round(g + (255 - g) * amount));
+      const lb = Math.min(255, Math.round(b + (255 - b) * amount));
+      return `#${((1 << 24) + (lr << 16) + (lg << 8) + lb).toString(16).slice(1)}`;
+    }
+
+    function setStrokeFromFill(hex) {
+      const fill = hex.polygon.getAttribute("fill");
+      hex.polygon.setAttribute("stroke", lightenColor(fill));
+    }
+
+    // 列定义：从左到右 9 列，格子数为 [3,4,5,6,7,6,5,4,3]
+    const columnCounts = [3, 4, 5, 6, 7, 6, 5, 4, 3];
+    const maxCount = Math.max(...columnCounts);
+    const viewWidth = 980;
+    const viewHeight = 640;
+    const totalWidth = width + (columnCounts.length - 1) * horiz;
+    const origin = {
+      x: (viewWidth - totalWidth) / 2 + width / 2,
+      y: viewHeight / 2,
+    };
+
+    function hexPoints(cx, cy, r) {
+      const points = [];
+      for (let i = 0; i < 6; i++) {
+        const angle = Math.PI / 180 * (60 * i);
+        points.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
+      }
+      return points.map(p => p.join(",")).join(" ");
+    }
+
+    function addHex(id, cx, cy, colorKey) {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.classList.add("hex");
+      g.dataset.id = id;
+
+      const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      poly.classList.add("hex-shape");
+      poly.setAttribute("points", hexPoints(cx, cy, size));
+      poly.setAttribute("fill", colors[colorKey]);
+      poly.setAttribute("stroke", lightenColor(colors[colorKey]));
+      poly.setAttribute("stroke-width", "2");
+      poly.setAttribute("stroke-linejoin", "round");
+
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.classList.add("label");
+      text.setAttribute("x", cx);
+      text.setAttribute("y", cy + 1);
+      text.textContent = id;
+
+      g.appendChild(poly);
+      g.appendChild(text);
+
+      svg.appendChild(g);
+
+      return { id, cx, cy, colorKey, group: g, polygon: poly };
+    }
+
+    const customOffsets = {
+      2: vert / 2,
+      4: -vert / 2,
+      6: -vert / 2,
+      8: -1.5 * vert,
+    };
+
+    const hexes = [];
+    const hexById = new Map();
+
+    columnCounts.forEach((count, colIndex) => {
+      const columnNumber = colIndex + 1;
+      const x = origin.x + colIndex * horiz;
+      const columnOffset = (colIndex % 2) * (vert / 2) + (customOffsets[columnNumber] || 0);
+      const colorKey = colIndex < 4 ? "r" : (colIndex === 4 ? "g" : "b");
+
+      for (let j = 1; j <= count; j++) {
+        const y = origin.y + columnOffset + ((count - 1) / 2 - (j - 1)) * vert;
+        const label = String(columnNumber * 10 + j);
+        const hex = addHex(label, x, y, colorKey);
+        hexes.push(hex);
+        hexById.set(label, hex);
+      }
+    });
+
+    function addTriangleMarker(hex, side) {
+      if (!hex) return;
+      const markerSize = 12;
+      const offset = size + 10;
+      const cy = hex.cy;
+      const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      let points = "";
+      if (side === "left") {
+        const leftX = hex.cx - offset - markerSize;
+        const rightX = hex.cx - offset;
+        points = `${rightX},${cy} ${leftX},${cy - markerSize / 2} ${leftX},${cy + markerSize / 2}`;
+      } else {
+        const leftX = hex.cx + offset;
+        const rightX = hex.cx + offset + markerSize;
+        points = `${leftX},${cy} ${rightX},${cy - markerSize / 2} ${rightX},${cy + markerSize / 2}`;
+      }
+      poly.setAttribute("points", points);
+      poly.setAttribute("fill", "#f4d35e");
+      poly.setAttribute("stroke", "#f8e5a6");
+      poly.setAttribute("stroke-width", "1");
+      svg.appendChild(poly);
+    }
+
+    addTriangleMarker(hexById.get("11"), "left");
+    addTriangleMarker(hexById.get("93"), "right");
+
+    function createPlayerLabel(id, color) {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      el.setAttribute("id", `player${id}`);
+      el.setAttribute("fill", color);
+      el.setAttribute("font-size", "13");
+      el.setAttribute("font-weight", "700");
+      el.setAttribute("text-anchor", "middle");
+      el.setAttribute("dominant-baseline", "hanging");
+      el.textContent = id;
+      svg.appendChild(el);
+      return el;
+    }
+
+    const playerA1El = createPlayerLabel("A1", "#ffffff");
+    const playerA2El = createPlayerLabel("A2", "#f0f4ff");
+    const playerB1El = createPlayerLabel("B1", "#d6e4ff");
+    const playerB2El = createPlayerLabel("B2", "#c3d6ff");
+
+    function setPlayerPosition(playerEl, hex) {
+      if (!hex) {
+        playerEl.setAttribute("display", "none");
+        return;
+      }
+      playerEl.setAttribute("display", "block");
+      playerEl.setAttribute("x", hex.cx);
+      playerEl.setAttribute("y", hex.cy + size * 0.25);
+    }
+
+    const players = {
+      A1: { id: "A1", team: "A", el: playerA1El, hex: hexById.get("11") },
+      B1: { id: "B1", team: "B", el: playerB1El, hex: hexById.get("93") },
+      A2: { id: "A2", team: "A", el: playerA2El, hex: null },
+      B2: { id: "B2", team: "B", el: playerB2El, hex: null },
+    };
+
+    const turnOrder = ["A1", "B1", "A2", "B2"];
+    const setupOrder = ["A2", "B2"];
+    let setupIndex = 0;
+    let setupMode = true;
+    let selectedHex = null;
+    let moveTargetHex = null;
+    let currentPlayerIndex = 0;
+    let turnCount = 0;
+    const undoStack = [];
+    let setupTargetHex = null;
+
+    Object.values(players).forEach(p => setPlayerPosition(p.el, p.hex));
+
+    const initialState = {
+      colors: new Map(hexes.map(h => [h, h.polygon.getAttribute("fill")])),
+      players: {
+        A1: players.A1.hex,
+        B1: players.B1.hex,
+        A2: players.A2.hex,
+        B2: players.B2.hex,
+      },
+      currentPlayerIndex,
+      turnCount,
+      setupIndex,
+      setupMode,
+    };
+
+    function setSelected(hex) {
+      if (selectedHex && selectedHex !== hex) {
+        selectedHex.polygon.classList.remove("selected");
+        setStrokeFromFill(selectedHex);
+      }
+      if (selectedHex === hex) {
+        selectedHex.polygon.classList.remove("selected");
+        setStrokeFromFill(selectedHex);
+        selectedHex = null;
+      } else {
+        selectedHex = hex;
+        selectedHex.polygon.classList.add("selected");
+      }
+      updateButtons();
+    }
+
+    function updateButtons() {
+      if (setupMode) {
+        confirmBtn.disabled = !setupTargetHex;
+        rotateBtn.disabled = false;
+        moveBtn.disabled = true;
+        skipBtn.disabled = true;
+        undoBtn.disabled = undoStack.length === 0;
+        turnCountEl.textContent = "0";
+        turnPlayerEl.textContent = setupOrder[setupIndex] || "-";
+      } else {
+        confirmBtn.disabled = true;
+        rotateBtn.disabled = false;
+        moveBtn.disabled = !moveTargetHex;
+        skipBtn.disabled = false;
+        undoBtn.disabled = undoStack.length === 0;
+        turnCountEl.textContent = String(turnCount);
+        turnPlayerEl.textContent = turnOrder[currentPlayerIndex];
+      }
+    }
+
+    function resetGame() {
+      hexes.forEach(h => {
+        const fill = initialState.colors.get(h);
+        if (fill) {
+          h.polygon.setAttribute("fill", fill);
+          setStrokeFromFill(h);
+        }
+        h.polygon.classList.remove("selected");
+      });
+
+      players.A1.hex = initialState.players.A1;
+      players.B1.hex = initialState.players.B1;
+      players.A2.hex = initialState.players.A2;
+      players.B2.hex = initialState.players.B2;
+      currentPlayerIndex = initialState.currentPlayerIndex;
+      turnCount = initialState.turnCount;
+      setupIndex = initialState.setupIndex;
+      setupMode = initialState.setupMode;
+      setupTargetHex = null;
+
+      Object.values(players).forEach(p => setPlayerPosition(p.el, p.hex));
+
+      selectedHex = null;
+      moveTargetHex = null;
+      undoStack.length = 0;
+      updateButtons();
+    }
+
+    hexes.forEach(hex => {
+      hex.group.addEventListener("click", () => {
+        if (setupMode) {
+          updateSetupTarget(hex);
+        } else {
+          setSelected(hex);
+          updateMoveTarget(hex);
+        }
+      });
+    });
+
+    function getNeighbors(centerHex) {
+      const threshold = vert * 1.12;
+      return hexes
+        .filter(h => h !== centerHex)
+        .map(h => ({
+          hex: h,
+          dist: Math.hypot(h.cx - centerHex.cx, h.cy - centerHex.cy),
+        }))
+        .filter(item => item.dist <= threshold)
+        .map(item => item.hex);
+    }
+
+    function getRing(centerHex, steps) {
+      let frontier = [centerHex];
+      const visited = new Set([centerHex]);
+
+      for (let i = 0; i < steps; i++) {
+        const next = [];
+        frontier.forEach(node => {
+          getNeighbors(node).forEach(nei => {
+            if (!visited.has(nei)) {
+              visited.add(nei);
+              next.push(nei);
+            }
+          });
+        });
+        frontier = next;
+      }
+
+      return frontier;
+    }
+
+    function orderByAngle(centerHex, ring) {
+      return ring
+        .map(h => ({
+          hex: h,
+          angle: Math.atan2(h.cy - centerHex.cy, h.cx - centerHex.cx),
+        }))
+        .sort((a, b) => b.angle - a.angle)
+        .map(item => item.hex);
+    }
+
+    function rotateClockwise() {
+      const centerHex = selectedHex || setupTargetHex;
+      if (!centerHex) return null;
+      const ring1 = orderByAngle(centerHex, getRing(centerHex, 1));
+      const ring2 = orderByAngle(centerHex, getRing(centerHex, 2));
+      const entry = { ring1: [], prevColors1: [], ring2: [], prevColors2: [] };
+
+      if (ring1.length >= 2) {
+        entry.ring1 = ring1;
+        entry.prevColors1 = ring1.map(h => h.polygon.getAttribute("fill"));
+        const nextColors1 = [...entry.prevColors1.slice(1), entry.prevColors1[0]];
+        ring1.forEach((h, i) => {
+          h.polygon.setAttribute("fill", nextColors1[i]);
+          setStrokeFromFill(h);
+        });
+      }
+
+      if (ring2.length >= 2) {
+        entry.ring2 = ring2;
+        entry.prevColors2 = ring2.map(h => h.polygon.getAttribute("fill"));
+        const nextColors2 = [entry.prevColors2[entry.prevColors2.length - 1], ...entry.prevColors2.slice(0, -1)];
+        ring2.forEach((h, i) => {
+          h.polygon.setAttribute("fill", nextColors2[i]);
+          setStrokeFromFill(h);
+        });
+      }
+
+      undoStack.push(entry);
+      updateButtons();
+      return entry;
+    }
+
+    function isNeighbor(centerHex, targetHex) {
+      return getNeighbors(centerHex).includes(targetHex);
+    }
+
+    function isColor(hex, color) {
+      const fill = hex.polygon.getAttribute("fill");
+      return fill.toLowerCase() === color.toLowerCase();
+    }
+
+    function getCurrentPlayerId() {
+      return turnOrder[currentPlayerIndex];
+    }
+
+    function getPlayerTeam(playerId) {
+      return playerId.startsWith("A") ? "A" : "B";
+    }
+
+    function getCurrentPlayerHex() {
+      const id = getCurrentPlayerId();
+      return players[id]?.hex || null;
+    }
+
+    function isValidMove(hex) {
+      const playerHex = getCurrentPlayerHex();
+      if (!playerHex) return false;
+      const requiredColor = getPlayerTeam(getCurrentPlayerId()) === "A" ? colors.r : colors.b;
+      const ownOk = isColor(playerHex, requiredColor) || isColor(playerHex, colors.g);
+      const targetOk = isColor(hex, requiredColor) || isColor(hex, colors.g);
+      return ownOk && isNeighbor(playerHex, hex) && targetOk;
+    }
+
+    function updateSetupTarget(clickedHex) {
+      if (setupTargetHex && setupTargetHex !== clickedHex) {
+        setupTargetHex.polygon.classList.remove("selected");
+        setStrokeFromFill(setupTargetHex);
+      }
+      if (setupTargetHex === clickedHex) {
+        setupTargetHex.polygon.classList.remove("selected");
+        setStrokeFromFill(setupTargetHex);
+        setupTargetHex = null;
+      } else {
+        setupTargetHex = clickedHex;
+        setupTargetHex.polygon.classList.add("selected");
+      }
+      updateButtons();
+    }
+
+    function updateMoveTarget(clickedHex) {
+      if (!getCurrentPlayerHex()) return;
+      if (isValidMove(clickedHex)) {
+        if (moveTargetHex && moveTargetHex !== clickedHex) {
+          moveTargetHex.polygon.classList.remove("selected");
+          setStrokeFromFill(moveTargetHex);
+        }
+        moveTargetHex = clickedHex;
+        moveTargetHex.polygon.classList.add("selected");
+      } else if (moveTargetHex) {
+        moveTargetHex.polygon.classList.remove("selected");
+        setStrokeFromFill(moveTargetHex);
+        moveTargetHex = null;
+      }
+      updateButtons();
+    }
+
+    function confirmStart() {
+      if (!setupMode || !setupTargetHex) return;
+      const playerId = setupOrder[setupIndex];
+      players[playerId].hex = setupTargetHex;
+      setPlayerPosition(players[playerId].el, players[playerId].hex);
+
+      setupTargetHex.polygon.classList.remove("selected");
+      setStrokeFromFill(setupTargetHex);
+      setupTargetHex = null;
+
+      setupIndex += 1;
+      if (setupIndex >= setupOrder.length) {
+        setupMode = false;
+        currentPlayerIndex = 0;
+        turnCount = 1;
+        selectedHex = getCurrentPlayerHex();
+        if (selectedHex) {
+          selectedHex.polygon.classList.add("selected");
+        }
+      }
+      updateButtons();
+    }
+
+    function movePlayer() {
+      if (setupMode || !moveTargetHex) return;
+      const prevPlayerIndex = currentPlayerIndex;
+      const prevTurn = turnCount;
+      const prevPositions = {};
+      Object.keys(players).forEach(id => {
+        prevPositions[id] = players[id].hex;
+      });
+
+      const currentId = getCurrentPlayerId();
+      players[currentId].hex = moveTargetHex;
+      setPlayerPosition(players[currentId].el, players[currentId].hex);
+
+      moveTargetHex.polygon.classList.remove("selected");
+      setStrokeFromFill(moveTargetHex);
+      moveTargetHex = null;
+
+      selectedHex = players[currentId].hex;
+      const entry = rotateClockwise();
+      if (entry) {
+        entry.prevPlayerIndex = prevPlayerIndex;
+        entry.prevTurn = prevTurn;
+        entry.prevPositions = prevPositions;
+      }
+
+      currentPlayerIndex = (currentPlayerIndex + 1) % turnOrder.length;
+      turnCount += 1;
+      updateButtons();
+    }
+
+    function skipTurn() {
+      if (setupMode) return;
+      const prevPlayerIndex = currentPlayerIndex;
+      const prevTurn = turnCount;
+      const prevPositions = {};
+      Object.keys(players).forEach(id => {
+        prevPositions[id] = players[id].hex;
+      });
+      undoStack.push({ ring1: [], prevColors1: [], ring2: [], prevColors2: [], prevPlayerIndex, prevTurn, prevPositions });
+      currentPlayerIndex = (currentPlayerIndex + 1) % turnOrder.length;
+      turnCount += 1;
+      if (moveTargetHex) {
+        moveTargetHex.polygon.classList.remove("selected");
+        setStrokeFromFill(moveTargetHex);
+        moveTargetHex = null;
+      }
+      updateButtons();
+    }
+
+    function undoLast() {
+      const last = undoStack.pop();
+      if (!last) return;
+      last.ring1.forEach((h, i) => {
+        h.polygon.setAttribute("fill", last.prevColors1[i]);
+        setStrokeFromFill(h);
+      });
+      last.ring2.forEach((h, i) => {
+        h.polygon.setAttribute("fill", last.prevColors2[i]);
+        setStrokeFromFill(h);
+      });
+      if (last.prevPositions) {
+        if (selectedHex) {
+          selectedHex.polygon.classList.remove("selected");
+          setStrokeFromFill(selectedHex);
+        }
+        Object.keys(players).forEach(id => {
+          players[id].hex = last.prevPositions[id];
+          setPlayerPosition(players[id].el, players[id].hex);
+        });
+        if (typeof last.prevPlayerIndex === "number") {
+          currentPlayerIndex = last.prevPlayerIndex;
+        }
+        if (typeof last.prevTurn === "number") {
+          turnCount = last.prevTurn;
+        }
+        selectedHex = getCurrentPlayerHex();
+        if (selectedHex) {
+          selectedHex.polygon.classList.add("selected");
+        }
+        moveTargetHex = null;
+      }
+      updateButtons();
+    }
+
+    moveBtn.addEventListener("click", movePlayer);
+    skipBtn.addEventListener("click", skipTurn);
+    undoBtn.addEventListener("click", undoLast);
+    resetBtn.addEventListener("click", resetGame);
+    confirmBtn.addEventListener("click", confirmStart);
+    rotateBtn.addEventListener("click", rotateClockwise);
+
+    updateButtons();
+  </script>
+</body>
+</html>
