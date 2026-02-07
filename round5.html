@@ -117,6 +117,35 @@
       display: inline-block;
       margin-right: 6px;
     }
+
+    @media (max-width: 768px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .panel {
+        order: 2;
+      }
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+      .btn {
+        width: 100%;
+        font-size: 15px;
+        padding: 10px 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .wrap {
+        padding: 12px;
+      }
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      svg {
+        border-radius: 12px;
+      }
+    }
   </style>
 </head>
 <body>
