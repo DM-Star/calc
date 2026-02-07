@@ -388,6 +388,10 @@
                 <button class="btn" onclick="game.customShuffle()">🔀 打乱N步</button>
             </div>
 
+            <div class="control-group">
+                <button class="btn" onclick="game.undoMove()">↩️ 撤回</button>
+            </div>
+
             <div class="moves">移动步数: <span id="moveCount">0</span></div>
         </div>
 
@@ -426,6 +430,7 @@
                 this.frontBoard = [];
                 this.backBoard = [];
                 this.moves = 0;
+                this.moveHistory = [];
                 this.bestMoves = localStorage.getItem('bestMoves') || null;
                 this.init();
             }
@@ -560,6 +565,7 @@
             // 随机打乱（完全随机）
             randomShuffle() {
                 this.moves = 0;
+                this.moveHistory = [];
                 this.updateMoveCount();
                 const boards = this.generateRandomBoards();
                 this.frontBoard = boards.front;
@@ -571,6 +577,8 @@
             // 自定义步数打乱（从正确状态开始打乱N步）
             customShuffle() {
                 const steps = parseInt(document.getElementById('shuffleSteps').value) || 50;
+
+                this.moveHistory = [];
 
                 // 初始化为正确状态
                 this.frontBoard = [];
@@ -641,6 +649,7 @@
             }
 
             handleArrowClick(direction, index) {
+                this.recordInverseMove(direction, index);
                 switch(direction) {
                     case 'top':
                         this.moveColumnUp(index);
@@ -657,6 +666,53 @@
                 }
 
                 this.moves++;
+                this.updateMoveCount();
+                this.render();
+                this.checkWin();
+            }
+
+            recordInverseMove(direction, index) {
+                let inverseDirection = direction;
+                switch(direction) {
+                    case 'top':
+                        inverseDirection = 'bottom';
+                        break;
+                    case 'bottom':
+                        inverseDirection = 'top';
+                        break;
+                    case 'left':
+                        inverseDirection = 'right';
+                        break;
+                    case 'right':
+                        inverseDirection = 'left';
+                        break;
+                }
+
+                this.moveHistory.push({ direction: inverseDirection, index });
+            }
+
+            undoMove() {
+                const lastMove = this.moveHistory.pop();
+                if (!lastMove) {
+                    return;
+                }
+
+                switch(lastMove.direction) {
+                    case 'top':
+                        this.moveColumnUp(lastMove.index);
+                        break;
+                    case 'bottom':
+                        this.moveColumnDown(lastMove.index);
+                        break;
+                    case 'left':
+                        this.moveRowLeft(lastMove.index);
+                        break;
+                    case 'right':
+                        this.moveRowRight(lastMove.index);
+                        break;
+                }
+
+                this.moves = Math.max(0, this.moves - 1);
                 this.updateMoveCount();
                 this.render();
                 this.checkWin();
@@ -716,58 +772,76 @@
                 }
             }
 
-            // 向上移动列（正面和背面连通，背面反向）
+            // 向上移动列（履带连接：正面顶端 -> 背面顶端，背面列左右翻转）
             moveColumnUp(col) {
-                // 创建循环数组：正面col[0-5] -> 背面col[5-0]（反向）
-                const cycle = [];
+                const backCol = this.size - 1 - col;
+                const positions = [];
+
+                // 履带顺序：front0 -> back0..back5 -> front5..front1
+                positions.push({ board: 'front', row: 0, col });
                 for (let row = 0; row < this.size; row++) {
-                    cycle.push(this.frontBoard[row][col]);
+                    positions.push({ board: 'back', row, col: backCol });
                 }
-                for (let row = this.size - 1; row >= 0; row--) {
-                    cycle.push(this.backBoard[row][col]);
-                }
-
-                // 向上移动（循环）
-                const first = cycle[0];
-                for (let i = 0; i < cycle.length - 1; i++) {
-                    cycle[i] = cycle[i + 1];
-                }
-                cycle[cycle.length - 1] = first;
-
-                // 写回
-                for (let row = 0; row < this.size; row++) {
-                    this.frontBoard[row][col] = cycle[row];
-                }
-                for (let row = this.size - 1; row >= 0; row--) {
-                    this.backBoard[row][col] = cycle[this.size + (this.size - 1 - row)];
-                }
-            }
-
-            // 向下移动列（正面和背面连通，背面反向）
-            moveColumnDown(col) {
-                // 创建循环数组：正面col[0-5] -> 背面col[5-0]（反向）
-                const cycle = [];
-                for (let row = 0; row < this.size; row++) {
-                    cycle.push(this.frontBoard[row][col]);
-                }
-                for (let row = this.size - 1; row >= 0; row--) {
-                    cycle.push(this.backBoard[row][col]);
+                for (let row = this.size - 1; row >= 1; row--) {
+                    positions.push({ board: 'front', row, col });
                 }
 
-                // 向下移动（循环）
+                const cycle = positions.map((pos) =>
+                    pos.board === 'front'
+                        ? this.frontBoard[pos.row][pos.col]
+                        : this.backBoard[pos.row][pos.col]
+                );
+
+                // 向上：沿履带方向移动（右移）
                 const last = cycle[cycle.length - 1];
                 for (let i = cycle.length - 1; i > 0; i--) {
                     cycle[i] = cycle[i - 1];
                 }
                 cycle[0] = last;
 
-                // 写回
+                positions.forEach((pos, index) => {
+                    if (pos.board === 'front') {
+                        this.frontBoard[pos.row][pos.col] = cycle[index];
+                    } else {
+                        this.backBoard[pos.row][pos.col] = cycle[index];
+                    }
+                });
+            }
+
+            // 向下移动列（履带连接：正面顶端 <- 背面顶端，背面列左右翻转）
+            moveColumnDown(col) {
+                const backCol = this.size - 1 - col;
+                const positions = [];
+
+                // 履带顺序：front0 -> back0..back5 -> front5..front1
+                positions.push({ board: 'front', row: 0, col });
                 for (let row = 0; row < this.size; row++) {
-                    this.frontBoard[row][col] = cycle[row];
+                    positions.push({ board: 'back', row, col: backCol });
                 }
-                for (let row = this.size - 1; row >= 0; row--) {
-                    this.backBoard[row][col] = cycle[this.size + (this.size - 1 - row)];
+                for (let row = this.size - 1; row >= 1; row--) {
+                    positions.push({ board: 'front', row, col });
                 }
+
+                const cycle = positions.map((pos) =>
+                    pos.board === 'front'
+                        ? this.frontBoard[pos.row][pos.col]
+                        : this.backBoard[pos.row][pos.col]
+                );
+
+                // 向下：沿履带反方向移动（左移）
+                const first = cycle[0];
+                for (let i = 0; i < cycle.length - 1; i++) {
+                    cycle[i] = cycle[i + 1];
+                }
+                cycle[cycle.length - 1] = first;
+
+                positions.forEach((pos, index) => {
+                    if (pos.board === 'front') {
+                        this.frontBoard[pos.row][pos.col] = cycle[index];
+                    } else {
+                        this.backBoard[pos.row][pos.col] = cycle[index];
+                    }
+                });
             }
 
             render() {
