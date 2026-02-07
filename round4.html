@@ -27,6 +27,7 @@
             padding: 40px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 1400px;
+            width: 100%;
         }
 
         h1 {
@@ -265,6 +266,110 @@
             font-size: 20px;
             font-weight: bold;
             color: #667eea;
+        }
+
+        /* 移动端响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .boards-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .board-section {
+                width: 100%;
+            }
+            
+            .grid-container {
+                padding: 10px;
+                gap: 4px;
+            }
+            
+            .cell {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+            
+            .arrow {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .corner {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .control-group {
+                justify-content: center;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .shuffle-input {
+                width: 60px;
+                font-size: 14px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        /* 超小屏幕优化 */
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .cell {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .arrow {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+            
+            .corner {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .grid-container {
+                gap: 3px;
+                padding: 8px;
+            }
         }
     </style>
 </head>
