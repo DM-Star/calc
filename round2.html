@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网格消除游戏</title>
+    <link rel="stylesheet" href="style_round2.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 网格消除游戏</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">总步数:</span>
+                    <span class="stat-value" id="stepCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">当前路径:</span>
+                    <span class="stat-value" id="currentPathLength">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">最长路径:</span>
+                    <span class="stat-value" id="maxPathLength">0</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="game-content">
+            <div class="game-board-wrapper">
+                <div id="gameBoard" class="game-board"></div>
+            </div>
+
+            <div class="sidebar">
+                <div class="controls">
+                    <h3>游戏控制</h3>
+                    <button id="newStartBtn" class="btn btn-primary">选择起点</button>
+                    <button id="finishSelectBtn" class="btn btn-success">完成选择</button>
+                    <button id="resetBtn" class="btn btn-secondary">重置游戏</button>
+
+                    <div class="start-points-panel">
+                        <h4>已选起点</h4>
+                        <div id="startPointsList" class="start-points-list">
+                            <p class="empty-message">点击"选择起点"开始</p>
+                        </div>
+                    </div>
+
+                    <div class="undo-redo-controls">
+                        <h4>历史操作</h4>
+                        <div class="undo-redo-buttons">
+                            <button id="undoBtn" class="btn btn-undo" title="撤销 (Ctrl+Z)">
+                                ↶ 撤销
+                            </button>
+                            <button id="redoBtn" class="btn btn-redo" title="重做 (Ctrl+Y)">
+                                ↷ 重做
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="direction-controls">
+                        <h4>移动控制</h4>
+                        <div class="arrow-keys">
+                            <button class="arrow-btn" id="upBtn">↑<br><small>W</small></button>
+                            <div class="arrow-row">
+                                <button class="arrow-btn" id="leftBtn">←<br><small>A</small></button>
+                                <button class="arrow-btn" id="downBtn">↓<br><small>S</small></button>
+                                <button class="arrow-btn" id="rightBtn">→<br><small>D</small></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-panel">
+                    <h3>游戏规则</h3>
+                    <div class="rules">
+                        <p><strong>移动条件:</strong></p>
+                        <ul>
+                            <li>移动到<strong>非空格子</strong>：数字或字母至少有一个相同</li>
+                            <li>移动到<strong>空格子</strong>：总是可以移动</li>
+                        </ul>
+                        <p><strong>碰撞规则:</strong></p>
+                        <ul>
+                            <li>数字字母都相同 → 不变，原格子消失</li>
+                            <li>只有字母相同 → 数字相加%10，原格子消失</li>
+                            <li>只有数字相同 → 字母五进制相加%5，原格子消失</li>
+                        </ul>
+                        <p><strong>⚠️ 特殊规则:</strong></p>
+                        <ul>
+                            <li>移动到<strong>非空格子</strong> → 计入路径长度和步数</li>
+                            <li>移动到<strong>空格子</strong> → 不计入路径（可调整位置）</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="path-display">
+                    <h3>当前路径</h3>
+                    <div id="pathList" class="path-list">
+                        <p class="empty-message">请选择起点开始游戏</p>
+                    </div>
+                </div>
+
+                <div class="available-moves">
+                    <h3>可用移动</h3>
+                    <div id="movesList" class="moves-list">
+                        <p class="empty-message">暂无可用移动</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script_round2.js"></script>
+</body>
+</html>
