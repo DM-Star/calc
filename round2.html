@@ -10,7 +10,15 @@
     <div class="container">
         <div class="game-content">
             <div class="game-board-wrapper">
-                <div id="gameBoard" class="game-board"></div>
+                <div class="board-with-axes">
+                    <div class="axis-row" id="axisTop"></div>
+                    <div class="axis-main">
+                        <div class="axis-col" id="axisLeft"></div>
+                        <div id="gameBoard" class="game-board"></div>
+                        <div class="axis-col" id="axisRight"></div>
+                    </div>
+                    <div class="axis-row" id="axisBottom"></div>
+                </div>
             </div>
 
             <div class="sidebar">

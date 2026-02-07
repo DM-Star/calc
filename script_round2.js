@@ -30,9 +30,36 @@ class GridGame {
         this.generateGrid();
         this.renderGrid();
         this.bindEvents();
+        this.renderAxes();
         this.updateStats();
         this.updatePathDisplay();
         this.updateStartPointsList();
+    }
+
+    renderAxes() {
+        const axisTop = document.getElementById('axisTop');
+        const axisBottom = document.getElementById('axisBottom');
+        const axisLeft = document.getElementById('axisLeft');
+        const axisRight = document.getElementById('axisRight');
+
+        if (!axisTop || !axisBottom || !axisLeft || !axisRight) {
+            return;
+        }
+
+        const labels = Array.from({ length: this.size }, (_, i) => i + 1);
+
+        const createRow = () => labels.map(value =>
+            `<div class="axis-label">${value}</div>`
+        ).join('');
+
+        const createCol = () => labels.map(value =>
+            `<div class="axis-label">${value}</div>`
+        ).join('');
+
+        axisTop.innerHTML = createRow();
+        axisBottom.innerHTML = createRow();
+        axisLeft.innerHTML = createCol();
+        axisRight.innerHTML = createCol();
     }
 
     generateGrid() {

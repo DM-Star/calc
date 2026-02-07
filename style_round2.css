@@ -78,6 +78,41 @@ body {
     max-height: calc(100vh - 40px);
 }
 
+.board-with-axes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+}
+
+.axis-row {
+    display: grid;
+    grid-template-columns: repeat(18, 36px);
+    gap: 2px;
+    font-size: 12px;
+    color: #4a5568;
+}
+
+.axis-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.axis-col {
+    display: grid;
+    grid-template-rows: repeat(18, 36px);
+    gap: 2px;
+    font-size: 12px;
+    color: #4a5568;
+}
+
+.axis-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .game-board-wrapper.turn-a {
     background: #dff7e8;
 }
